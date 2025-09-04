@@ -10,6 +10,7 @@
 	export let showProfiles = false;
 	export let loading = false;
 	export let layout: 'grid' | 'list' = 'grid';
+	export let clickable = false;
 
 	const dispatch = createEventDispatcher<{
 		memberClick: { member: any };
@@ -82,9 +83,9 @@
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 		<div
 			class="member-card"
-			class:member-card--clickable={$$listeners.memberClick}
-			role={$$listeners.memberClick ? 'button' : undefined}
-			tabindex={$$listeners.memberClick ? 0 : undefined}
+			class:member-card--clickable={clickable}
+			role={clickable ? 'button' : undefined}
+			tabindex={clickable ? 0 : undefined}
 			on:click={() => handleMemberClick(member)}
 			on:keydown={(e) => handleKeydown(e, member)}
 		>

@@ -230,6 +230,7 @@
 				showTiers={true}
 				{loading}
 				layout="grid"
+				clickable={false}
 			/>
 
 			<!-- Pagination -->
