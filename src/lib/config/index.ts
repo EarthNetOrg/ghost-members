@@ -22,6 +22,14 @@ const DEFAULT_CONFIG: WidgetConfig = {
 	showMemberCount: true,
 	enableLanguageSwitcher: true,
 
+	// Display Options
+	showTitle: true,
+	showTierFilter: true,
+	showStatusFilter: true,
+	showNewsletterFilter: true,
+	defaultView: 'grid',
+	enableViewToggle: true,
+
 	// Styling
 	widgetTheme: 'light',
 	primaryColor: '#1f2937',

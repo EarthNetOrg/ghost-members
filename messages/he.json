@@ -4,6 +4,7 @@
 	"searchMembers": "חיפוש חברים...",
 	"filterByTier": "סינון לפי רמה",
 	"sortBy": "מיין לפי",
+	"membersCount": "{count, plural, =0 {אין חברים} =1 {חבר אחד} =2 {שני חברים} many {# חברים} other {# חברים}}",
 	"joinedOn": "הצטרף ב-{date}",
 	"showingResults": "מציג {start}-{end} מתוך {total} חברים",
 	"noResultsFound": "לא נמצאו חברים התואמים לחיפוש שלך",

@@ -55,7 +55,7 @@ export class WidgetMounter {
 	private static appliedGlobalStyles = false;
 
 	static async mount(
-		selector: string | HTMLElement, 
+		selector: string | HTMLElement,
 		options: EmbedOptions = {}
 	): Promise<MountResult> {
 		if (!browser) {
@@ -67,9 +67,8 @@ export class WidgetMounter {
 
 		try {
 			// Resolve target element
-			const targetElement = typeof selector === 'string' 
-				? document.querySelector(selector) as HTMLElement
-				: selector;
+			const targetElement =
+				typeof selector === 'string' ? (document.querySelector(selector) as HTMLElement) : selector;
 
 			if (!targetElement) {
 				return {
@@ -106,7 +105,7 @@ export class WidgetMounter {
 			// Create widget container
 			const widgetContainer = document.createElement('div');
 			widgetContainer.className = 'ghost-member-directory-widget';
-			
+
 			// Apply CSS custom properties
 			const cssProps = config.getCSSCustomProperties();
 			Object.entries(cssProps).forEach(([prop, value]) => {
@@ -129,7 +128,7 @@ export class WidgetMounter {
 
 			// Fetch initial data from server API
 			const apiUrl = new URL('/api/widget/members', window.location.origin);
-			
+
 			// Add configuration parameters to API call
 			apiUrl.searchParams.set('lang', configData.defaultLanguage);
 			apiUrl.searchParams.set('theme', configData.widgetTheme);
@@ -167,7 +166,8 @@ export class WidgetMounter {
 					totalPages: serverData.totalPages,
 					loading: false,
 					initialSearchQuery: serverData.searchQuery,
-					initialFilters: serverData.filters
+					initialFilters: serverData.filters,
+					availableNewsletters: serverData.availableNewsletters || []
 				}
 			});
 
@@ -189,7 +189,7 @@ export class WidgetMounter {
 				},
 				update: (newConfig: Partial<WidgetConfig>) => {
 					config.update(newConfig);
-					
+
 					// Update CSS custom properties
 					const updatedCssProps = config.getCSSCustomProperties();
 					Object.entries(updatedCssProps).forEach(([prop, value]) => {
@@ -222,7 +222,6 @@ export class WidgetMounter {
 				success: true,
 				instance
 			};
-
 		} catch (error) {
 			return {
 				success: false,
@@ -233,9 +232,7 @@ export class WidgetMounter {
 
 	static unmount(instance: WidgetInstance | string): boolean {
 		try {
-			const widgetInstance = typeof instance === 'string' 
-				? widgetRegistry.get(instance)
-				: instance;
+			const widgetInstance = typeof instance === 'string' ? widgetRegistry.get(instance) : instance;
 
 			if (!widgetInstance) {
 				return false;
@@ -255,11 +252,11 @@ export class WidgetMounter {
 
 	private static injectGlobalStyles(config: ConfigManager): void {
 		const configData = config.get();
-		
+
 		// Create style element
 		const styleElement = document.createElement('style');
 		styleElement.id = 'ghost-member-directory-global-styles';
-		
+
 		styleElement.textContent = `
 			.ghost-member-directory-widget {
 				--widget-primary-color: ${configData.primaryColor};

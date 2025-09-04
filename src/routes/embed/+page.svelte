@@ -3,16 +3,16 @@
 	import MemberDirectoryWidget from '$lib/widget/MemberDirectoryWidget.svelte';
 	import { ConfigManager } from '$lib/config/index.js';
 	import type { PageData } from './$types';
-	
+
 	export let data: PageData;
-	
+
 	let loading = false;
 	let searchQuery = data.searchQuery;
 	let selectedFilters = data.filters;
-	
+
 	// Create config manager from server data
 	$: config = new ConfigManager(data.config);
-	
+
 	// Handle loading state (you can add loading logic here if needed)
 
 	async function handleSearch(query: string) {
@@ -31,31 +31,41 @@
 
 	async function updateUrl(additionalParams: Record<string, any> = {}) {
 		const url = new URL(window.location.href);
-		
+
 		// Update search query
 		if (searchQuery) {
 			url.searchParams.set('q', searchQuery);
 		} else {
 			url.searchParams.delete('q');
 		}
-		
+
 		// Update filters
 		if (selectedFilters.tier) {
 			url.searchParams.set('tier', selectedFilters.tier);
 		} else {
 			url.searchParams.delete('tier');
 		}
-		
+
 		if (selectedFilters.status) {
 			url.searchParams.set('status', selectedFilters.status);
 		} else {
 			url.searchParams.delete('status');
 		}
-		
+
+		if (selectedFilters.newsletters) {
+			url.searchParams.set('newsletters', selectedFilters.newsletters);
+		} else {
+			url.searchParams.delete('newsletters');
+		}
+
 		// Handle page changes
 		if (additionalParams.page) {
 			url.searchParams.set('page', additionalParams.page.toString());
-		} else if (!additionalParams.page && (searchQuery !== data.searchQuery || JSON.stringify(selectedFilters) !== JSON.stringify(data.filters))) {
+		} else if (
+			!additionalParams.page &&
+			(searchQuery !== data.searchQuery ||
+				JSON.stringify(selectedFilters) !== JSON.stringify(data.filters))
+		) {
 			// Reset to page 1 when search/filters change
 			url.searchParams.delete('page');
 		}
@@ -66,13 +76,16 @@
 
 <svelte:head>
 	<title>Member Directory Widget</title>
-	<meta name="description" content="Ghost Member Directory Widget - Multilingual member directory with RTL support" />
+	<meta
+		name="description"
+		content="Ghost Member Directory Widget - Multilingual member directory with RTL support"
+	/>
 	<!-- Allow iframe embedding from any domain -->
-	<meta http-equiv="content-security-policy" content="frame-ancestors *;">
+	<meta http-equiv="content-security-policy" content="frame-ancestors *;" />
 </svelte:head>
 
 <div class="embed-container">
-	<MemberDirectoryWidget 
+	<MemberDirectoryWidget
 		{config}
 		members={data.members}
 		totalMembers={data.totalMembers}
@@ -81,6 +94,7 @@
 		{loading}
 		initialSearchQuery={searchQuery}
 		initialFilters={selectedFilters}
+		availableNewsletters={data.availableNewsletters || []}
 		on:search={(e) => handleSearch(e.detail)}
 		on:filterChange={(e) => handleFilterChange(e.detail)}
 		on:pageChange={(e) => handlePageChange(e.detail)}
@@ -91,7 +105,10 @@
 	:global(body) {
 		margin: 0;
 		padding: 0;
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
 		background: transparent;
 	}
 
@@ -101,7 +118,6 @@
 		display: flex;
 		flex-direction: column;
 	}
-
 
 	/* Override widget styles for iframe context */
 	:global(.ghost-member-directory) {

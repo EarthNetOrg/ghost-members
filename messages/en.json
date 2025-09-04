@@ -5,6 +5,7 @@
 	"searchMembers": "Search members...",
 	"filterByTier": "Filter by tier",
 	"sortBy": "Sort by",
+	"membersCount": "{count} members",
 	"joinedOn": "Joined on {date}",
 	"showingResults": "Showing {start}-{end} of {total} members",
 	"noResultsFound": "No members found matching your search",

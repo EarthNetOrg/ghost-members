@@ -4,6 +4,7 @@
 	"searchMembers": "Mitglieder suchen...",
 	"filterByTier": "Nach Stufe filtern",
 	"sortBy": "Sortieren nach",
+	"membersCount": "{count, plural, =0 {Keine Mitglieder} =1 {1 Mitglied} other {# Mitglieder}}",
 	"joinedOn": "Beigetreten am {date}",
 	"showingResults": "Zeige {start}-{end} von {total} Mitgliedern",
 	"noResultsFound": "Keine Mitglieder gefunden, die Ihrer Suche entsprechen",

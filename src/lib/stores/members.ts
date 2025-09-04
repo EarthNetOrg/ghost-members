@@ -76,10 +76,7 @@ class MemberStore {
 		([search, filters]) => search.active || filters.active
 	);
 
-	public readonly isLoading = derived(
-		this.memberState,
-		($memberState) => $memberState.loading
-	);
+	public readonly isLoading = derived(this.memberState, ($memberState) => $memberState.loading);
 
 	public readonly hasError = derived(
 		this.memberState,
@@ -128,7 +125,7 @@ class MemberStore {
 				response = await this.apiClient.searchMembers(searchState.query, options);
 			} else if (filterState.active) {
 				const filters: MemberFilters = {};
-				
+
 				if (filterState.tier) filters.tier = filterState.tier;
 				if (filterState.label) filters.label = filterState.label;
 				if (filterState.status) filters.status = filterState.status;
@@ -144,7 +141,7 @@ class MemberStore {
 				response = await this.apiClient.getMembers(options);
 			}
 
-			this.memberState.update(state => ({
+			this.memberState.update((state) => ({
 				...state,
 				members: response.data || [],
 				pagination: {
@@ -154,7 +151,6 @@ class MemberStore {
 					pageSize: response.meta?.pagination?.limit || state.pagination.pageSize
 				}
 			}));
-
 		} catch (error) {
 			this.setError(error instanceof Error ? error.message : 'Failed to load members');
 		} finally {
@@ -163,7 +159,7 @@ class MemberStore {
 	}
 
 	async searchMembers(query: string): Promise<void> {
-		this.searchState.update(state => ({
+		this.searchState.update((state) => ({
 			query: query.trim(),
 			active: query.trim().length > 0
 		}));
@@ -172,12 +168,12 @@ class MemberStore {
 	}
 
 	async applyFilters(filters: Partial<FilterState>): Promise<void> {
-		this.filterState.update(state => {
+		this.filterState.update((state) => {
 			const newState = { ...state, ...filters };
 			newState.active = !!(
-				newState.tier || 
-				newState.label || 
-				newState.status || 
+				newState.tier ||
+				newState.label ||
+				newState.status ||
 				newState.dateRange
 			);
 			return newState;
@@ -215,17 +211,17 @@ class MemberStore {
 
 	async changeSort(field: SortState['field'], direction?: SortState['direction']): Promise<void> {
 		const currentSort = this.getCurrentSortState();
-		
-		const newDirection = direction || (
-			currentSort.field === field && currentSort.direction === 'asc' ? 'desc' : 'asc'
-		);
+
+		const newDirection =
+			direction ||
+			(currentSort.field === field && currentSort.direction === 'asc' ? 'desc' : 'asc');
 
 		this.sortState.set({ field, direction: newDirection });
 		await this.loadMembers(1);
 	}
 
 	setPageSize(pageSize: number): void {
-		this.memberState.update(state => ({
+		this.memberState.update((state) => ({
 			...state,
 			pagination: {
 				...state.pagination,
@@ -237,38 +233,38 @@ class MemberStore {
 
 	// Utility methods
 	private setLoading(loading: boolean): void {
-		this.memberState.update(state => ({ ...state, loading }));
+		this.memberState.update((state) => ({ ...state, loading }));
 	}
 
 	private setError(error: string): void {
-		this.memberState.update(state => ({ ...state, error }));
+		this.memberState.update((state) => ({ ...state, error }));
 	}
 
 	private clearError(): void {
-		this.memberState.update(state => ({ ...state, error: null }));
+		this.memberState.update((state) => ({ ...state, error: null }));
 	}
 
 	private getCurrentState(): MemberState {
 		let currentState: MemberState;
-		this.memberState.subscribe(state => currentState = state)();
+		this.memberState.subscribe((state) => (currentState = state))();
 		return currentState!;
 	}
 
 	private getCurrentSearchState(): SearchState {
 		let currentState: SearchState;
-		this.searchState.subscribe(state => currentState = state)();
+		this.searchState.subscribe((state) => (currentState = state))();
 		return currentState!;
 	}
 
 	private getCurrentFilterState(): FilterState {
 		let currentState: FilterState;
-		this.filterState.subscribe(state => currentState = state)();
+		this.filterState.subscribe((state) => (currentState = state))();
 		return currentState!;
 	}
 
 	private getCurrentSortState(): SortState {
 		let currentState: SortState;
-		this.sortState.subscribe(state => currentState = state)();
+		this.sortState.subscribe((state) => (currentState = state))();
 		return currentState!;
 	}
 

@@ -19,6 +19,14 @@ export interface WidgetConfig {
 	showMemberCount: boolean;
 	enableLanguageSwitcher: boolean;
 
+	// Display Options
+	showTitle: boolean;
+	showTierFilter: boolean;
+	showStatusFilter: boolean;
+	showNewsletterFilter: boolean;
+	defaultView: 'grid' | 'list';
+	enableViewToggle: boolean;
+
 	// Styling
 	widgetTheme: 'light' | 'dark';
 	primaryColor: string;

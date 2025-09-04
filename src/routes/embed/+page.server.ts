@@ -4,14 +4,39 @@ import { GhostApiClient } from '$lib/api/ghost.js';
 import { ConfigManager } from '$lib/config/index.js';
 import { env } from '$env/dynamic/private';
 
+// Helper function to get unique newsletters from members
+function getAvailableNewsletters(members: any[]): any[] {
+	const newsletterMap = new Map();
+
+	members.forEach((member: any) => {
+		if (member.newsletters && Array.isArray(member.newsletters)) {
+			member.newsletters.forEach((newsletter: any) => {
+				if (newsletter.status === 'active') {
+					newsletterMap.set(newsletter.id, {
+						id: newsletter.id,
+						name: newsletter.name,
+						description: newsletter.description
+					});
+				}
+			});
+		}
+	});
+
+	return Array.from(newsletterMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export const load: PageServerLoad = async ({ url }) => {
 	try {
 		// Get Ghost API credentials from environment
 		const ghostAdminApiUrl = env.GHOST_ADMIN_API_URL || 'https://canadapt.news';
-		const ghostAdminApiKey = env.GHOST_ADMIN_API_KEY || '6761f77c69075304a8e05550:3f693b7ac07da47acb5b094ffcd531af1c0ea7ad0ad8ca1c1d441b94bc18dbc1';
+		const ghostAdminApiKey =
+			env.GHOST_ADMIN_API_KEY ||
+			'6761f77c69075304a8e05550:3f693b7ac07da47acb5b094ffcd531af1c0ea7ad0ad8ca1c1d441b94bc18dbc1';
 
 		if (!ghostAdminApiUrl || !ghostAdminApiKey) {
-			throw new Error('Ghost API credentials not configured. Please set GHOST_ADMIN_API_URL and GHOST_ADMIN_API_KEY environment variables.');
+			throw new Error(
+				'Ghost API credentials not configured. Please set GHOST_ADMIN_API_URL and GHOST_ADMIN_API_KEY environment variables.'
+			);
 		}
 
 		// Get configuration from URL parameters
@@ -27,6 +52,12 @@ export const load: PageServerLoad = async ({ url }) => {
 			showAvatars: urlParams.get('avatars') !== 'false',
 			showJoinDates: urlParams.get('joinDates') !== 'false',
 			showMemberCount: urlParams.get('memberCount') !== 'false',
+			showTitle: urlParams.get('showTitle') !== 'false',
+			showTierFilter: urlParams.get('showTierFilter') !== 'false',
+			showStatusFilter: urlParams.get('showStatusFilter') !== 'false',
+			showNewsletterFilter: urlParams.get('showNewsletterFilter') !== 'false',
+			defaultView: (urlParams.get('defaultView') || 'grid') as 'grid' | 'list',
+			enableViewToggle: urlParams.get('enableViewToggle') !== 'false',
 			enableCaching: true,
 			autoDetectLanguage: false
 		});
@@ -39,6 +70,7 @@ export const load: PageServerLoad = async ({ url }) => {
 		const searchQuery = urlParams.get('q') || '';
 		const tierFilter = urlParams.get('tier') || '';
 		const statusFilter = urlParams.get('status') || '';
+		const newslettersFilter = urlParams.get('newsletters') || '';
 
 		// Prepare API options
 		const apiOptions = {
@@ -60,6 +92,58 @@ export const load: PageServerLoad = async ({ url }) => {
 			memberResponse = await apiClient.getMembers(apiOptions);
 		}
 
+		// Filter out members with 'private' label
+		const filteredMembers = (memberResponse.data || []).filter((member: any) => {
+			if (!member.labels || !Array.isArray(member.labels)) {
+				return true; // Include members without labels
+			}
+			// Exclude members who have a label with slug 'private'
+			return !member.labels.some(
+				(label: any) => label.slug === 'private' || label.name?.toLowerCase() === 'private'
+			);
+		});
+
+		// Apply newsletter filtering if specified (multiple newsletters with OR logic)
+		let finalMembers = filteredMembers;
+		if (newslettersFilter.trim()) {
+			const selectedNewsletters = newslettersFilter.split(',').map((n) => n.trim());
+			finalMembers = filteredMembers.filter((member: any) => {
+				if (!member.newsletters || !Array.isArray(member.newsletters)) {
+					return false; // Exclude members without newsletters if filtering by newsletter
+				}
+				// Check if member is subscribed to any of the selected newsletters (OR logic)
+				return member.newsletters.some((newsletter: any) =>
+					selectedNewsletters.some(
+						(selectedNewsletter) =>
+							newsletter.name === selectedNewsletter ||
+							newsletter.id === selectedNewsletter ||
+							newsletter.name?.toLowerCase().includes(selectedNewsletter.toLowerCase())
+					)
+				);
+			});
+		}
+
+		// Sanitize member data to remove email addresses but keep username for fallback
+		const sanitizedMembers = finalMembers.map((member: any) => {
+			const sanitized = { ...member };
+			
+			// Extract username from email for name fallback, then remove email
+			if (member.email && typeof member.email === 'string') {
+				const emailParts = member.email.split('@');
+				if (emailParts.length > 0 && emailParts[0] && !member.name) {
+					sanitized.username = emailParts[0];
+				}
+			}
+			
+			// Remove the email address
+			delete sanitized.email;
+			
+			return sanitized;
+		});
+
+		// Update memberResponse with sanitized data
+		memberResponse.data = sanitizedMembers;
+
 		// Test connection to ensure API is working
 		const connectionTest = await apiClient.testConnection();
 		if (!connectionTest.success) {
@@ -70,13 +154,17 @@ export const load: PageServerLoad = async ({ url }) => {
 			members: memberResponse.data || [],
 			totalMembers: memberResponse.meta?.pagination?.total || 0,
 			currentPage,
-			totalPages: Math.ceil((memberResponse.meta?.pagination?.total || 0) / config.get().defaultPageSize),
+			totalPages: Math.ceil(
+				(memberResponse.meta?.pagination?.total || 0) / config.get().defaultPageSize
+			),
 			config: config.get(),
 			searchQuery,
 			filters: {
 				tier: tierFilter,
-				status: statusFilter
-			}
+				status: statusFilter,
+				newsletters: newslettersFilter
+			},
+			availableNewsletters: getAvailableNewsletters(finalMembers)
 		};
 	} catch (err) {
 		console.error('Error loading member data:', err);

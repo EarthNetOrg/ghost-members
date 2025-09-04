@@ -47,16 +47,13 @@ class UIStore {
 	public readonly isRTL = derived(this.uiState, ($ui) => $ui.rtl);
 	public readonly isDark = derived(this.uiState, ($ui) => $ui.theme === 'dark');
 	public readonly isMobile = derived(this.uiState, ($ui) => $ui.isMobile);
-	public readonly showControls = derived(
-		this.uiState, 
-		($ui) => $ui.showSearch || $ui.showFilters
-	);
+	public readonly showControls = derived(this.uiState, ($ui) => $ui.showSearch || $ui.showFilters);
 
 	initializeFromConfig(config: ConfigManager): void {
 		this.config = config;
 		const configData = config.get();
 
-		this.uiState.update(state => ({
+		this.uiState.update((state) => ({
 			...state,
 			theme: configData.widgetTheme,
 			language: configData.defaultLanguage,
@@ -74,8 +71,8 @@ class UIStore {
 
 	// UI Actions
 	setViewMode(viewMode: ViewMode): void {
-		this.uiState.update(state => ({ ...state, viewMode }));
-		
+		this.uiState.update((state) => ({ ...state, viewMode }));
+
 		// Save preference to localStorage if available
 		if (typeof localStorage !== 'undefined') {
 			localStorage.setItem('ghost-member-directory-view', viewMode);
@@ -88,8 +85,8 @@ class UIStore {
 	}
 
 	setTheme(theme: Theme): void {
-		this.uiState.update(state => ({ ...state, theme }));
-		
+		this.uiState.update((state) => ({ ...state, theme }));
+
 		if (typeof localStorage !== 'undefined') {
 			localStorage.setItem('ghost-member-directory-theme', theme);
 		}
@@ -101,8 +98,8 @@ class UIStore {
 	}
 
 	setLanguage(language: string): void {
-		this.uiState.update(state => ({ 
-			...state, 
+		this.uiState.update((state) => ({
+			...state,
 			language,
 			rtl: this.config?.isRTL(language) || false
 		}));
@@ -113,27 +110,27 @@ class UIStore {
 	}
 
 	setSearchFocus(focused: boolean): void {
-		this.uiState.update(state => ({ ...state, searchFocused: focused }));
+		this.uiState.update((state) => ({ ...state, searchFocused: focused }));
 	}
 
 	toggleFilters(): void {
-		this.uiState.update(state => ({ ...state, filtersExpanded: !state.filtersExpanded }));
+		this.uiState.update((state) => ({ ...state, filtersExpanded: !state.filtersExpanded }));
 	}
 
 	setFiltersExpanded(expanded: boolean): void {
-		this.uiState.update(state => ({ ...state, filtersExpanded: expanded }));
+		this.uiState.update((state) => ({ ...state, filtersExpanded: expanded }));
 	}
 
 	// Toast Management
 	addToast(toast: Omit<ToastMessage, 'id'>): string {
 		const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-		const newToast: ToastMessage = { 
-			id, 
+		const newToast: ToastMessage = {
+			id,
 			duration: toast.duration || 5000,
-			...toast 
+			...toast
 		};
 
-		this.toasts.update(toasts => [...toasts, newToast]);
+		this.toasts.update((toasts) => [...toasts, newToast]);
 
 		// Auto-remove toast after duration
 		if (newToast.duration > 0) {
@@ -146,7 +143,7 @@ class UIStore {
 	}
 
 	removeToast(id: string): void {
-		this.toasts.update(toasts => toasts.filter(toast => toast.id !== id));
+		this.toasts.update((toasts) => toasts.filter((toast) => toast.id !== id));
 	}
 
 	clearAllToasts(): void {
@@ -173,7 +170,7 @@ class UIStore {
 	// Mobile detection
 	private detectMobile(): void {
 		const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-		this.uiState.update(state => ({ ...state, isMobile }));
+		this.uiState.update((state) => ({ ...state, isMobile }));
 	}
 
 	// Initialize from localStorage
@@ -183,12 +180,12 @@ class UIStore {
 		try {
 			const savedView = localStorage.getItem('ghost-member-directory-view');
 			if (savedView === 'grid' || savedView === 'list') {
-				this.uiState.update(state => ({ ...state, viewMode: savedView }));
+				this.uiState.update((state) => ({ ...state, viewMode: savedView }));
 			}
 
 			const savedTheme = localStorage.getItem('ghost-member-directory-theme');
 			if (savedTheme === 'light' || savedTheme === 'dark') {
-				this.uiState.update(state => ({ ...state, theme: savedTheme }));
+				this.uiState.update((state) => ({ ...state, theme: savedTheme }));
 			}
 
 			const savedLanguage = localStorage.getItem('ghost-member-directory-language');
@@ -237,7 +234,7 @@ class UIStore {
 	// Utility methods
 	private getCurrentState(): UIState {
 		let currentState: UIState;
-		this.uiState.subscribe(state => currentState = state)();
+		this.uiState.subscribe((state) => (currentState = state))();
 		return currentState!;
 	}
 

@@ -36,7 +36,7 @@ export class GhostApiClient {
 
 	constructor(options: GhostApiOptions) {
 		this.maxRetries = options.maxRetries || 3;
-		
+
 		// Initialize the official Ghost Admin API client
 		this.api = new GhostAdminAPI({
 			url: options.baseUrl,
@@ -60,19 +60,18 @@ export class GhostApiClient {
 			return await operation();
 		} catch (error) {
 			// Check if we should retry
-			const shouldRetry = 
-				retryCount < this.maxRetries && 
-				(error instanceof Error && (
-					error.message.includes('timeout') ||
+			const shouldRetry =
+				retryCount < this.maxRetries &&
+				error instanceof Error &&
+				(error.message.includes('timeout') ||
 					error.message.includes('network') ||
 					error.message.includes('429') ||
-					error.message.includes('5')
-				));
+					error.message.includes('5'));
 
 			if (shouldRetry) {
 				// Exponential backoff: 1s, 2s, 4s
 				const delay = Math.pow(2, retryCount) * 1000;
-				await new Promise(resolve => setTimeout(resolve, delay));
+				await new Promise((resolve) => setTimeout(resolve, delay));
 				return this.retryOperation(operation, retryCount + 1);
 			}
 
@@ -95,10 +94,10 @@ export class GhostApiClient {
 			};
 
 			const response = await this.api.members.browse(queryOptions);
-			
+
 			// Get the actual response with proper pagination info
 			const responseData = response as any;
-			
+
 			// Transform the response to match our expected format
 			return {
 				data: responseData,
@@ -106,7 +105,9 @@ export class GhostApiClient {
 					pagination: {
 						page: queryOptions.page,
 						limit: queryOptions.limit,
-						pages: responseData.meta?.pagination?.pages || Math.ceil((responseData.length || 0) / queryOptions.limit),
+						pages:
+							responseData.meta?.pagination?.pages ||
+							Math.ceil((responseData.length || 0) / queryOptions.limit),
 						total: responseData.meta?.pagination?.total || responseData.length || 0,
 						next: responseData.meta?.pagination?.next || undefined,
 						prev: responseData.meta?.pagination?.prev || undefined
@@ -118,9 +119,12 @@ export class GhostApiClient {
 
 	async getMember(id: string): Promise<{ members: GhostMember[] }> {
 		return this.retryOperation(async () => {
-			const member = await this.api.members.read({ id }, {
-				include: 'labels,newsletters'
-			});
+			const member = await this.api.members.read(
+				{ id },
+				{
+					include: 'labels,newsletters'
+				}
+			);
 			return { members: [member] };
 		});
 	}
@@ -131,7 +135,7 @@ export class GhostApiClient {
 	): Promise<GhostApiResponse<GhostMember>> {
 		// Ghost API search filter format
 		const searchFilter = `name:~'${query}',email:~'${query}'`;
-		
+
 		return this.getMembers({
 			...options,
 			filter: searchFilter
@@ -143,7 +147,7 @@ export class GhostApiClient {
 		options: Omit<MemberQueryOptions, 'filter'> = {}
 	): Promise<GhostApiResponse<GhostMember>> {
 		let filter: string;
-		
+
 		switch (tier.toLowerCase()) {
 			case 'free':
 				filter = 'status:free';
@@ -182,7 +186,7 @@ export class GhostApiClient {
 	): Promise<GhostApiResponse<GhostMember>> {
 		const start = startDate.toISOString();
 		const end = endDate.toISOString();
-		
+
 		return this.getMembers({
 			...options,
 			filter: `created_at:>='${start}'+created_at:<='${end}'`
@@ -228,7 +232,7 @@ export class GhostApiClient {
 		options: Omit<MemberQueryOptions, 'filter'> = {}
 	): Promise<GhostApiResponse<GhostMember>> {
 		const filter = this.buildComplexFilter(filters);
-		
+
 		return this.getMembers({
 			...options,
 			filter: filter || undefined
@@ -241,7 +245,7 @@ export class GhostApiClient {
 				// Test with a simple site info request
 				const site = await this.api.site.read();
 				const members = await this.api.members.browse({ limit: 1 });
-				
+
 				return {
 					success: true,
 					message: 'Connection successful',

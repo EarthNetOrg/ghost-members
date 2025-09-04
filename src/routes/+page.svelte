@@ -3,18 +3,27 @@
 	import { WidgetMounter } from '$lib/widget/mount.js';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
-	
+
 	let widgetContainer: HTMLElement;
 	let status: 'loading' | 'success' | 'error' = 'loading';
 	let errorMessage = '';
 	let apiUrl = 'https://canadapt.news';
-	let apiKey = '6761f77c69075304a8e05550:3f693b7ac07da47acb5b094ffcd531af1c0ea7ad0ad8ca1c1d441b94bc18dbc1';
+	let apiKey =
+		'6761f77c69075304a8e05550:3f693b7ac07da47acb5b094ffcd531af1c0ea7ad0ad8ca1c1d441b94bc18dbc1';
 	// Initialize language from URL parameter if provided
 	$: urlLang = $page.url.searchParams.get('lang');
 	let language = 'en';
 	let theme: 'light' | 'dark' = 'light';
 	let pageSize = 24;
-	
+
+	// New configuration options
+	let showTitle = true;
+	let showTierFilter = true;
+	let showStatusFilter = true;
+	let showNewsletterFilter = true;
+	let defaultView: 'grid' | 'list' = 'grid';
+	let enableViewToggle = true;
+
 	// Get current server URL for embedding instructions
 	$: currentUrl = browser ? window.location.origin : 'https://your-domain.com';
 
@@ -22,8 +31,15 @@
 		try {
 			// Use URL parameter if provided, otherwise use selected language
 			const effectiveLanguage = urlLang || language;
-			console.log('Using language:', effectiveLanguage, 'from URL:', urlLang, 'from dropdown:', language);
-			
+			console.log(
+				'Using language:',
+				effectiveLanguage,
+				'from URL:',
+				urlLang,
+				'from dropdown:',
+				language
+			);
+
 			const result = await WidgetMounter.mount(widgetContainer, {
 				ghostAdminApiUrl: apiUrl,
 				ghostAdminApiKey: apiKey,
@@ -35,6 +51,12 @@
 				showAvatars: true,
 				showJoinDates: true,
 				showMemberCount: true,
+				showTitle,
+				showTierFilter,
+				showStatusFilter,
+				showNewsletterFilter,
+				defaultView,
+				enableViewToggle,
 				autoDetectLanguage: false // Disable auto-detect for demo so explicit language selection works
 			});
 
@@ -55,19 +77,26 @@
 		const url = new URL(window.location.href);
 		url.searchParams.set('lang', language);
 		window.history.pushState({}, '', url.toString());
-		
+
 		// Now remount the widget (the reactive statement will pick up the URL change)
 		await remountWidget();
 	}
 
 	async function remountWidget() {
 		status = 'loading';
-		
+
 		try {
 			// Use URL parameter if provided, otherwise use selected language
 			const effectiveLanguage = urlLang || language;
-			console.log('Remounting with language:', effectiveLanguage, 'from URL:', urlLang, 'from dropdown:', language);
-			
+			console.log(
+				'Remounting with language:',
+				effectiveLanguage,
+				'from URL:',
+				urlLang,
+				'from dropdown:',
+				language
+			);
+
 			const result = await WidgetMounter.mount(widgetContainer, {
 				ghostAdminApiUrl: apiUrl,
 				ghostAdminApiKey: apiKey,
@@ -79,6 +108,12 @@
 				showAvatars: true,
 				showJoinDates: true,
 				showMemberCount: true,
+				showTitle,
+				showTierFilter,
+				showStatusFilter,
+				showNewsletterFilter,
+				defaultView,
+				enableViewToggle,
 				autoDetectLanguage: false // Disable auto-detect for demo so explicit language selection works
 			});
 
@@ -106,22 +141,14 @@
 		<div class="control-group">
 			<label>
 				Ghost API URL:
-				<input 
-					type="url" 
-					bind:value={apiUrl}
-					placeholder="https://yourblog.ghost.io"
-				/>
+				<input type="url" bind:value={apiUrl} placeholder="https://yourblog.ghost.io" />
 			</label>
-			
+
 			<label>
 				API Key:
-				<input 
-					type="text" 
-					bind:value={apiKey}
-					placeholder="Your admin API key"
-				/>
+				<input type="text" bind:value={apiKey} placeholder="Your admin API key" />
 			</label>
-			
+
 			<label>
 				Language:
 				<select bind:value={language}>
@@ -134,7 +161,7 @@
 					<option value="ru">Русский</option>
 				</select>
 			</label>
-			
+
 			<label>
 				Theme:
 				<select bind:value={theme}>
@@ -142,31 +169,60 @@
 					<option value="dark">Dark</option>
 				</select>
 			</label>
-			
+
 			<label>
 				Page Size:
-				<input 
-					type="number" 
-					bind:value={pageSize}
-					min="6"
-					max="50"
-					step="6"
-				/>
+				<input type="number" bind:value={pageSize} min="6" max="50" step="6" />
 			</label>
 		</div>
-		
-		<button 
-			class="remount-button"
-			on:click={applyConfiguration}
-			disabled={status === 'loading'}
-		>
+
+		<h3>Display Options</h3>
+		<div class="control-group">
+			<label>
+				<input type="checkbox" bind:checked={showTitle} />
+				Show Title
+			</label>
+
+			<label>
+				Default View:
+				<select bind:value={defaultView}>
+					<option value="grid">Grid</option>
+					<option value="list">List</option>
+				</select>
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={enableViewToggle} />
+				Enable View Toggle
+			</label>
+		</div>
+
+		<h3>Filter Options</h3>
+		<div class="control-group">
+			<label>
+				<input type="checkbox" bind:checked={showTierFilter} />
+				Show Tier Filter
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={showStatusFilter} />
+				Show Status Filter
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={showNewsletterFilter} />
+				Show Newsletter Filter
+			</label>
+		</div>
+
+		<button class="remount-button" on:click={applyConfiguration} disabled={status === 'loading'}>
 			{status === 'loading' ? 'Loading...' : 'Apply Configuration'}
 		</button>
 	</div>
 
 	<div class="demo-widget">
 		<h2>Widget Preview</h2>
-		
+
 		{#if status === 'loading'}
 			<div class="status loading">
 				<p>Loading widget...</p>
@@ -177,8 +233,8 @@
 				<button on:click={remountWidget}>Try Again</button>
 			</div>
 		{/if}
-		
-		<div 
+
+		<div
 			bind:this={widgetContainer}
 			class="widget-container"
 			class:hidden={status !== 'success'}
@@ -188,9 +244,10 @@
 	<div class="demo-docs">
 		<h2>Embedding Instructions</h2>
 		<p>This widget can be embedded in your Ghost theme or website using various methods:</p>
-		
+
 		<h3>Method 1: Iframe Embed (Recommended)</h3>
-		<pre><code>&lt;!-- Simple iframe embed - works anywhere without theme modifications --&gt;
+		<pre><code
+				>&lt;!-- Simple iframe embed - works anywhere without theme modifications --&gt;
 &lt;iframe 
   src="{currentUrl}/embed?lang=en&amp;theme=light&amp;pageSize=24"
   width="100%" 
@@ -198,10 +255,12 @@
   frameborder="0"
   title="Member Directory"
   style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
-&gt;&lt;/iframe&gt;</code></pre>
+&gt;&lt;/iframe&gt;</code
+			></pre>
 
 		<h3>Method 2: Direct Script Include</h3>
-		<pre><code>&lt;!-- Add to your Ghost theme's default.hbs before closing &lt;/body&gt; tag --&gt;
+		<pre><code
+				>&lt;!-- Add to your Ghost theme's default.hbs before closing &lt;/body&gt; tag --&gt;
 &lt;div id="ghost-member-directory"&gt;&lt;/div&gt;
 &lt;script src="{currentUrl}/widget.js"&gt;&lt;/script&gt;
 &lt;script&gt;
@@ -210,10 +269,12 @@
     widgetTheme: &apos;light&apos;,
     defaultPageSize: 24
   &rbrace;);
-&lt;/script&gt;</code></pre>
+&lt;/script&gt;</code
+			></pre>
 
 		<h3>Method 3: ESM Import</h3>
-		<pre><code>import &lbrace; WidgetMounter &rbrace; from &apos;./path/to/widget.js&apos;;
+		<pre><code
+				>import &lbrace; WidgetMounter &rbrace; from &apos;./path/to/widget.js&apos;;
 
 const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
   defaultLanguage: &apos;en&apos;,
@@ -224,10 +285,11 @@ const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
   showJoinDates: true,
   showMemberCount: true,
   defaultPageSize: 24
-&rbrace;);</code></pre>
+&rbrace;);</code
+			></pre>
 
 		<h3>Configuration Options</h3>
-		
+
 		<h4>Iframe URL Parameters</h4>
 		<ul>
 			<li><strong>lang:</strong> 'en', 'ar', 'he', 'es', 'fr', 'de', 'ru'</li>
@@ -238,11 +300,19 @@ const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
 			<li><strong>avatars:</strong> 'true' or 'false' - Show avatars</li>
 			<li><strong>joinDates:</strong> 'true' or 'false' - Show join dates</li>
 			<li><strong>memberCount:</strong> 'true' or 'false' - Show member count</li>
+			<li><strong>showTitle:</strong> 'true' or 'false' - Show directory title</li>
+			<li><strong>showTierFilter:</strong> 'true' or 'false' - Show tier filter</li>
+			<li><strong>showStatusFilter:</strong> 'true' or 'false' - Show status filter</li>
+			<li><strong>showNewsletterFilter:</strong> 'true' or 'false' - Show newsletter filter</li>
+			<li><strong>defaultView:</strong> 'grid' or 'list' - Default layout view</li>
+			<li><strong>enableViewToggle:</strong> 'true' or 'false' - Enable view toggle button</li>
 		</ul>
-		
+
 		<p><strong>Example iframe with custom parameters:</strong></p>
-		<pre><code>&lt;iframe src="{currentUrl}/embed?lang=ar&amp;theme=dark&amp;pageSize=12&amp;search=true" 
-        width="100%" height="600"&gt;&lt;/iframe&gt;</code></pre>
+		<pre><code
+				>&lt;iframe src="{currentUrl}/embed?lang=ar&amp;theme=dark&amp;pageSize=12&amp;defaultView=list&amp;showTitle=false&amp;enableViewToggle=true" 
+        width="100%" height="600"&gt;&lt;/iframe&gt;</code
+			></pre>
 
 		<h4>JavaScript API Options</h4>
 		<ul>
@@ -254,20 +324,33 @@ const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
 			<li><strong>showAvatars:</strong> Show member avatars (default: true)</li>
 			<li><strong>showJoinDates:</strong> Show member join dates (default: true)</li>
 			<li><strong>showMemberCount:</strong> Show total member count (default: true)</li>
+			<li><strong>showTitle:</strong> Show directory title (default: true)</li>
+			<li><strong>showTierFilter:</strong> Show tier filter dropdown (default: true)</li>
+			<li><strong>showStatusFilter:</strong> Show status filter dropdown (default: true)</li>
+			<li><strong>showNewsletterFilter:</strong> Show newsletter filter dropdown (default: true)</li>
+			<li><strong>defaultView:</strong> 'grid' or 'list' - Default layout view (default: 'grid')</li>
+			<li><strong>enableViewToggle:</strong> Enable view toggle button (default: true)</li>
 			<li><strong>enableCaching:</strong> Enable API response caching (default: true)</li>
 		</ul>
 
 		<h3>Server Configuration</h3>
-		<p>The widget requires server-side configuration for Ghost API credentials. Set these as environment variables or in your build configuration:</p>
-		<pre><code># Environment variables
+		<p>
+			The widget requires server-side configuration for Ghost API credentials. Set these as
+			environment variables or in your build configuration:
+		</p>
+		<pre><code
+				># Environment variables
 GHOST_ADMIN_API_URL=https://yourblog.ghost.io
 GHOST_ADMIN_API_KEY=your-admin-api-key
 
 # Or configure during build process
-# These credentials should be bundled securely server-side</code></pre>
+# These credentials should be bundled securely server-side</code
+			></pre>
 
 		<div class="demo-note">
-			<strong>Language Support:</strong> The widget supports Arabic and Hebrew with RTL layout, plus English, Spanish, French, German, and Russian. Use URL parameters like <code>?lang=ar</code> to override the default language.
+			<strong>Language Support:</strong> The widget supports Arabic and Hebrew with RTL layout, plus
+			English, Spanish, French, German, and Russian. Use URL parameters like <code>?lang=ar</code> to
+			override the default language.
 		</div>
 	</div>
 </div>
@@ -277,7 +360,10 @@ GHOST_ADMIN_API_KEY=your-admin-api-key
 		max-width: 1200px;
 		margin: 0 auto;
 		padding: 2rem 1rem;
-		font-family: system-ui, -apple-system, sans-serif;
+		font-family:
+			system-ui,
+			-apple-system,
+			sans-serif;
 	}
 
 	.demo-header {
@@ -310,11 +396,19 @@ GHOST_ADMIN_API_KEY=your-admin-api-key
 		border: 1px solid #e5e7eb;
 	}
 
-	.demo-controls h2 {
+	.demo-controls h2,
+	.demo-controls h3 {
 		margin: 0 0 1rem;
 		font-size: 1.25rem;
 		font-weight: 600;
 		color: #1f2937;
+	}
+
+	.demo-controls h3 {
+		font-size: 1.1rem;
+		margin-top: 1.5rem;
+		padding-top: 1rem;
+		border-top: 1px solid #e5e7eb;
 	}
 
 	.control-group {
@@ -339,6 +433,18 @@ GHOST_ADMIN_API_KEY=your-admin-api-key
 		border-radius: 6px;
 		font-size: 0.875rem;
 		background: white;
+	}
+
+	.control-group input[type="checkbox"] {
+		width: auto;
+		padding: 0;
+		margin-right: 0.5rem;
+	}
+
+	.control-group label:has(input[type="checkbox"]) {
+		flex-direction: row;
+		align-items: center;
+		cursor: pointer;
 	}
 
 	.remount-button {
@@ -454,7 +560,8 @@ GHOST_ADMIN_API_KEY=your-admin-api-key
 	}
 
 	.demo-docs code {
-		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+		font-family:
+			'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 		line-height: 1.5;
 	}
 

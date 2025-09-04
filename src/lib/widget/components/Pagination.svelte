@@ -65,7 +65,10 @@
 <div class="pagination">
 	<div class="pagination-info">
 		<span class="page-info">
-			{page()} {currentPage} {of()} {totalPages}
+			{page()}
+			{currentPage}
+			{of()}
+			{totalPages}
 		</span>
 	</div>
 
@@ -78,19 +81,19 @@
 			disabled={!hasPrevious || disabled}
 			aria-label={previous()}
 		>
-			<svg 
-				width="16" 
-				height="16" 
-				viewBox="0 0 16 16" 
-				fill="none" 
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 16 16"
+				fill="none"
 				xmlns="http://www.w3.org/2000/svg"
 				class="pagination-icon"
 			>
-				<path 
-					d="M10 12L6 8L10 4" 
-					stroke="currentColor" 
-					stroke-width="1.5" 
-					stroke-linecap="round" 
+				<path
+					d="M10 12L6 8L10 4"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
 					stroke-linejoin="round"
 				/>
 			</svg>
@@ -156,19 +159,19 @@
 			aria-label={next()}
 		>
 			<span class="pagination-text">{next()}</span>
-			<svg 
-				width="16" 
-				height="16" 
-				viewBox="0 0 16 16" 
-				fill="none" 
+			<svg
+				width="16"
+				height="16"
+				viewBox="0 0 16 16"
+				fill="none"
 				xmlns="http://www.w3.org/2000/svg"
 				class="pagination-icon"
 			>
-				<path 
-					d="M6 4L10 8L6 12" 
-					stroke="currentColor" 
-					stroke-width="1.5" 
-					stroke-linecap="round" 
+				<path
+					d="M6 4L10 8L6 12"
+					stroke="currentColor"
+					stroke-width="1.5"
+					stroke-linecap="round"
 					stroke-linejoin="round"
 				/>
 			</svg>

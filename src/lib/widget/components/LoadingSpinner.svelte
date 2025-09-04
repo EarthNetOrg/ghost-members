@@ -21,7 +21,7 @@
 	}
 </script>
 
-<div 
+<div
 	class="loading-spinner"
 	class:loading-spinner--inline={inline}
 	class:loading-spinner--small={size === 'small'}
@@ -179,7 +179,7 @@
 		.spinner-track {
 			opacity: 0.5;
 		}
-		
+
 		.loading-message {
 			font-weight: 600;
 		}
@@ -198,7 +198,8 @@
 		}
 
 		@keyframes pulse {
-			0%, 100% {
+			0%,
+			100% {
 				opacity: 1;
 			}
 			50% {

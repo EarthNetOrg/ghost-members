@@ -39,7 +39,7 @@
 	}
 </script>
 
-<div 
+<div
 	class="error-message"
 	class:error-message--error={variant === 'error'}
 	class:error-message--warning={variant === 'warning'}
@@ -52,26 +52,44 @@
 >
 	<div class="error-icon">
 		{#if variant === 'error'}
-			<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
-				<path d="M10 6V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-				<circle cx="10" cy="14" r="1" fill="currentColor"/>
+			<svg
+				width="20"
+				height="20"
+				viewBox="0 0 20 20"
+				fill="none"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5" />
+				<path d="M10 6V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				<circle cx="10" cy="14" r="1" fill="currentColor" />
 			</svg>
 		{:else if variant === 'warning'}
-			<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path 
-					d="M8.485 2.495c.673-1.326 2.357-1.326 3.03 0l6.28 12.346c.584 1.149-.146 2.538-1.515 2.538H3.72c-1.369 0-2.099-1.389-1.515-2.538L8.485 2.495z" 
-					stroke="currentColor" 
+			<svg
+				width="20"
+				height="20"
+				viewBox="0 0 20 20"
+				fill="none"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<path
+					d="M8.485 2.495c.673-1.326 2.357-1.326 3.03 0l6.28 12.346c.584 1.149-.146 2.538-1.515 2.538H3.72c-1.369 0-2.099-1.389-1.515-2.538L8.485 2.495z"
+					stroke="currentColor"
 					stroke-width="1.5"
 				/>
-				<path d="M10 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-				<circle cx="10" cy="14" r="1" fill="currentColor"/>
+				<path d="M10 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				<circle cx="10" cy="14" r="1" fill="currentColor" />
 			</svg>
 		{:else}
-			<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
-				<path d="M10 6V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-				<path d="M10 14H10.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+			<svg
+				width="20"
+				height="20"
+				viewBox="0 0 20 20"
+				fill="none"
+				xmlns="http://www.w3.org/2000/svg"
+			>
+				<circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5" />
+				<path d="M10 6V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+				<path d="M10 14H10.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
 			</svg>
 		{/if}
 	</div>
@@ -90,17 +108,23 @@
 						on:click={handleRetry}
 						on:keydown={(e) => handleKeydown(e, 'retry')}
 					>
-						<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path 
-								d="M1 4V10C1 11.6569 2.34315 13 4 13H12C13.6569 13 15 11.6569 15 10V6C15 4.34315 13.6569 3 12 3H4C2.34315 3 1 4.34315 1 6V4Z" 
-								stroke="currentColor" 
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M1 4V10C1 11.6569 2.34315 13 4 13H12C13.6569 13 15 11.6569 15 10V6C15 4.34315 13.6569 3 12 3H4C2.34315 3 1 4.34315 1 6V4Z"
+								stroke="currentColor"
 								stroke-width="1.5"
 							/>
-							<path 
-								d="M4 1L1 4L4 7" 
-								stroke="currentColor" 
-								stroke-width="1.5" 
-								stroke-linecap="round" 
+							<path
+								d="M4 1L1 4L4 7"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
 								stroke-linejoin="round"
 							/>
 						</svg>
@@ -116,12 +140,18 @@
 						on:keydown={(e) => handleKeydown(e, 'close')}
 						aria-label={closeButtonLabel}
 					>
-						<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-							<path 
-								d="M12 4L4 12M4 4L12 12" 
-								stroke="currentColor" 
-								stroke-width="1.5" 
-								stroke-linecap="round" 
+						<svg
+							width="16"
+							height="16"
+							viewBox="0 0 16 16"
+							fill="none"
+							xmlns="http://www.w3.org/2000/svg"
+						>
+							<path
+								d="M12 4L4 12M4 4L12 12"
+								stroke="currentColor"
+								stroke-width="1.5"
+								stroke-linecap="round"
 								stroke-linejoin="round"
 							/>
 						</svg>

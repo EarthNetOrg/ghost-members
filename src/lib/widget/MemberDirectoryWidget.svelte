@@ -1,15 +1,15 @@
 <script lang="ts">
 	import type { ConfigManager } from '../config/index.js';
 	import { onMount, createEventDispatcher } from 'svelte';
-	import { 
-		memberDirectory, 
-		searchMembers, 
-		filterByTier, 
-		free, 
-		premium, 
-		loadingMembers, 
-		noResultsFound, 
-		memberSince, 
+	import {
+		memberDirectory,
+		searchMembers,
+		filterByTier,
+		free,
+		premium,
+		loadingMembers,
+		noResultsFound,
+		memberSince,
 		retry,
 		previous,
 		next,
@@ -17,17 +17,18 @@
 		of
 	} from '$lib/paraglide/messages.js';
 	import { setLocale, locales, getLocale } from '$lib/paraglide/runtime.js';
-	
+
 	// Components
 	import MemberGrid from './components/MemberGrid.svelte';
 	import SearchBar from './components/SearchBar.svelte';
 	import FilterPanel from './components/FilterPanel.svelte';
+	import ViewToggle from './components/ViewToggle.svelte';
 	import Pagination from './components/Pagination.svelte';
 	import LoadingSpinner from './components/LoadingSpinner.svelte';
 	import ErrorMessage from './components/ErrorMessage.svelte';
 
 	export let config: ConfigManager;
-	
+
 	// Optional props for server-side data
 	export let members: any[] = [];
 	export let totalMembers: number = 0;
@@ -36,47 +37,47 @@
 	export let loading: boolean = false;
 	export let initialSearchQuery: string = '';
 	export let initialFilters: any = {};
+	export let availableNewsletters: any[] = [];
 
 	// Component state
 	let error: string | null = null;
 	let searchQuery = initialSearchQuery;
 	let selectedFilters: any = initialFilters;
+	let currentView: 'grid' | 'list' = 'grid';
+	let viewInitialized = false;
 
 	// Reactive configuration
 	$: configData = config.get();
 	$: isRTL = config.isRTL();
 	$: pageSize = configData.defaultPageSize;
-	
-	// Set the locale immediately when the config changes  
+
+	// Initialize current view from config (only once)
+	$: if (configData.defaultView && !viewInitialized) {
+		currentView = configData.defaultView;
+		viewInitialized = true;
+	}
+
+	// Set the locale immediately when the config changes
 	$: if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
-		console.log('Language changed to:', configData.defaultLanguage);
-		console.log('Current locale before change:', getLocale());
 		setLocale(configData.defaultLanguage as any);
-		console.log('New locale set:', getLocale());
 	}
 
 	const dispatch = createEventDispatcher<{
 		search: string;
 		filterChange: any;
 		pageChange: number;
+		retry: void;
 	}>();
 
 	onMount(() => {
-		// Set up language - prioritize configured language 
-		console.log('Setting up language. Default:', configData.defaultLanguage);
-		console.log('Available locales:', locales);
-		
+
 		// Force set the configured language (will also trigger reactive statement above)
 		if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
-			console.log('Setting locale to configured language:', configData.defaultLanguage);
 			setLocale(configData.defaultLanguage as any);
 		} else {
 			console.log('Fallback to English');
 			setLocale('en' as any);
 		}
-		
-		console.log('Current locale after setting:', getLocale());
-		console.log('Widget mounted in server-side only mode');
 	});
 
 	// loadMembers function removed - we now only use server-side data
@@ -99,48 +100,73 @@
 		// Retry is handled by server-side data refetch
 		dispatch('retry');
 	}
+
+	function handleViewChange(view: 'grid' | 'list') {
+		currentView = view;
+	}
 </script>
 
 <!-- Widget Container -->
-<div 
+<div
 	class="ghost-member-directory"
 	class:ghost-member-directory--rtl={isRTL}
 	class:ghost-member-directory--dark={configData.widgetTheme === 'dark'}
 	class:ghost-member-directory--light={configData.widgetTheme === 'light'}
 >
 	<!-- Header -->
-	<div class="directory-header">
-		<h2 class="directory-title">
-			{memberDirectory()}
-		</h2>
-		
-		{#if configData.showMemberCount && totalMembers > 0}
-			<div class="member-count">
-				{totalMembers} members
-			</div>
-		{/if}
-	</div>
-
-	<!-- Search and Filters -->
-	{#if configData.enableSearch || configData.enableFilters}
-		<div class="directory-controls">
-			{#if configData.enableSearch}
-				<SearchBar
-					value={searchQuery}
-					placeholder={searchMembers()}
-					disabled={loading}
-					on:search={e => handleSearch(e.detail)}
-					on:clear={() => handleSearch('')}
-				/>
+	{#if configData.showTitle || configData.showMemberCount}
+		<div class="directory-header">
+			{#if configData.showTitle}
+				<h2 class="directory-title">
+					{memberDirectory()}
+				</h2>
 			{/if}
 
-			{#if configData.enableFilters}
-				<FilterPanel
-					filters={selectedFilters}
-					disabled={loading}
-					on:change={e => handleFilterChange(e.detail)}
-					on:clear={() => handleFilterChange({})}
-				/>
+			{#if configData.showMemberCount && totalMembers > 0}
+				<div class="member-count">
+					{totalMembers} members
+				</div>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- Search, Filters, and View Toggle -->
+	{#if configData.enableSearch || configData.enableFilters || configData.enableViewToggle}
+		<div class="directory-controls">
+			<!-- Debug: View toggle config -->
+			<div class="controls-left">
+				{#if configData.enableSearch}
+					<SearchBar
+						value={searchQuery}
+						placeholder={searchMembers()}
+						disabled={loading}
+						on:search={(e) => handleSearch(e.detail)}
+						on:clear={() => handleSearch('')}
+					/>
+				{/if}
+
+				{#if configData.enableFilters}
+					<FilterPanel
+						filters={selectedFilters}
+						disabled={loading}
+						{availableNewsletters}
+						showTierFilter={configData.showTierFilter}
+						showStatusFilter={configData.showStatusFilter}
+						showNewsletterFilter={configData.showNewsletterFilter}
+						on:change={(e) => handleFilterChange(e.detail)}
+						on:clear={() => handleFilterChange({})}
+					/>
+				{/if}
+			</div>
+
+			{#if configData.enableViewToggle}
+				<div class="controls-right">
+					<ViewToggle
+						{currentView}
+						disabled={loading}
+						on:viewChange={(e) => handleViewChange(e.detail)}
+					/>
+				</div>
 			{/if}
 		</div>
 	{/if}
@@ -149,14 +175,11 @@
 	<div class="directory-content">
 		{#if loading}
 			<div class="loading-state">
-				<LoadingSpinner 
-					size="large"
-					message={loadingMembers()}
-				/>
+				<LoadingSpinner size="large" message={loadingMembers()} />
 			</div>
 		{:else if error}
 			<div class="error-state">
-				<ErrorMessage 
+				<ErrorMessage
 					message={error}
 					variant="error"
 					size="large"
@@ -173,14 +196,14 @@
 			</div>
 		{:else}
 			<!-- Member Grid -->
-			<MemberGrid 
+			<MemberGrid
 				{members}
 				showAvatars={configData.showAvatars}
 				showRealNames={configData.showRealNames}
 				showJoinDates={configData.showJoinDates}
 				showTiers={true}
 				{loading}
-				layout="grid"
+				layout={currentView}
 				clickable={false}
 			/>
 
@@ -188,12 +211,12 @@
 			{#if totalMembers > 0}
 				<div class="directory-pagination">
 					<Pagination
-						currentPage={currentPage}
-						totalPages={totalPages}
+						{currentPage}
+						{totalPages}
 						disabled={loading}
 						showPageNumbers={true}
 						maxVisiblePages={5}
-						on:pageChange={e => handlePageChange(e.detail)}
+						on:pageChange={(e) => handlePageChange(e.detail)}
 					/>
 				</div>
 			{/if}
@@ -236,11 +259,24 @@
 
 	.directory-controls {
 		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
 		gap: 1rem;
 		margin-bottom: 1.5rem;
 		flex-wrap: wrap;
 	}
 
+	.controls-left {
+		display: flex;
+		gap: 1rem;
+		flex-wrap: wrap;
+		flex: 1;
+	}
+
+	.controls-right {
+		display: flex;
+		align-items: flex-start;
+	}
 
 	.directory-content {
 		min-height: 200px;
@@ -255,18 +291,15 @@
 		text-align: center;
 	}
 
-
 	/* RTL adjustments */
 	.ghost-member-directory--rtl .directory-header {
 		flex-direction: row-reverse;
 	}
 
-
 	/* Dark theme adjustments */
 	.ghost-member-directory--dark .directory-header {
 		border-bottom-color: rgba(255, 255, 255, 0.1);
 	}
-
 
 	/* Responsive design */
 	@media (max-width: 640px) {
@@ -284,5 +317,13 @@
 			flex-direction: column;
 		}
 
+		.controls-left {
+			flex-direction: column;
+		}
+
+		.controls-right {
+			width: 100%;
+			justify-content: center;
+		}
 	}
 </style>

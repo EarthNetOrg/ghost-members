@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { createEventDispatcher } from 'svelte';
 	import { memberSince, viewProfile, free, premium, comped } from '$lib/paraglide/messages.js';
-	
+
 	export let members: any[] = [];
 	export let showAvatars = true;
 	export let showRealNames = true;
@@ -11,6 +11,7 @@
 	export let loading = false;
 	export let layout: 'grid' | 'list' = 'grid';
 	export let clickable = false;
+
 
 	const dispatch = createEventDispatcher<{
 		memberClick: { member: any };
@@ -39,7 +40,7 @@
 		if (!member.subscriptions || !Array.isArray(member.subscriptions)) {
 			return [];
 		}
-		
+
 		return member.subscriptions
 			.map((sub: any) => sub.tier?.type)
 			.filter((tier: string) => tier)
@@ -60,9 +61,18 @@
 	}
 
 	function getMemberName(member: any): string {
-		if (showRealNames && member.name) {
+		
+		if (member.name && typeof member.name === 'string') {
 			return member.name;
 		}
+
+		// If no name is available, use the username (extracted from email on server)
+		if (member.username && typeof member.username === 'string') {
+			return member.username;
+		}
+
+		console.log('MemberGrid: member:', member);
+
 		return 'Member';
 	}
 
@@ -74,12 +84,13 @@
 	}
 </script>
 
-<div 
+<div
 	class="member-grid"
 	class:member-grid--list={layout === 'list'}
 	class:member-grid--loading={loading}
 >
 	{#each members as member (member.id)}
+	{console.log('MemberGrid: member:', member)}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 		<div
 			class="member-card"
@@ -100,12 +111,18 @@
 				</div>
 			{:else if showAvatars}
 				<div class="member-avatar member-avatar--placeholder">
-					<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-						<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
-						<path 
-							d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21" 
-							stroke="currentColor" 
-							stroke-width="1.5" 
+					<svg
+						width="24"
+						height="24"
+						viewBox="0 0 24 24"
+						fill="none"
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5" />
+						<path
+							d="M6 21C6 17.134 8.686 14 12 14C15.314 14 18 17.134 18 21"
+							stroke="currentColor"
+							stroke-width="1.5"
 							stroke-linecap="round"
 						/>
 					</svg>
@@ -126,12 +143,18 @@
 							aria-label={viewProfile()}
 							title={viewProfile()}
 						>
-							<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<path 
-									d="M6 12L10 8L6 4" 
-									stroke="currentColor" 
-									stroke-width="1.5" 
-									stroke-linecap="round" 
+							<svg
+								width="16"
+								height="16"
+								viewBox="0 0 16 16"
+								fill="none"
+								xmlns="http://www.w3.org/2000/svg"
+							>
+								<path
+									d="M6 12L10 8L6 4"
+									stroke="currentColor"
+									stroke-width="1.5"
+									stroke-linecap="round"
 									stroke-linejoin="round"
 								/>
 							</svg>
@@ -156,12 +179,6 @@
 							{/each}
 						</div>
 					{/if}
-				{/if}
-
-				{#if member.email && layout === 'list'}
-					<p class="member-email">
-						{member.email}
-					</p>
 				{/if}
 			</div>
 		</div>
@@ -299,14 +316,6 @@
 		line-height: 1.25;
 	}
 
-	.member-email {
-		margin: 0;
-		font-size: 0.75rem;
-		color: var(--widget-text-color, #6b7280);
-		line-height: 1.25;
-		font-family: monospace;
-	}
-
 	.member-tiers {
 		display: flex;
 		gap: 0.25rem;
@@ -391,16 +400,16 @@
 		.member-grid {
 			grid-template-columns: 1fr;
 		}
-		
+
 		.member-card {
 			padding: 0.75rem;
 		}
-		
+
 		.member-avatar {
 			width: 40px;
 			height: 40px;
 		}
-		
+
 		.member-name {
 			font-size: 0.875rem;
 		}

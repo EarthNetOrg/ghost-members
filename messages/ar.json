@@ -5,6 +5,7 @@
 	"searchMembers": "البحث في الأعضاء...",
 	"filterByTier": "تصفية حسب الفئة",
 	"sortBy": "ترتيب حسب",
+	"membersCount": "{count} أعضاء",
 	"joinedOn": "انضم في {date}",
 	"showingResults": "عرض {start}-{end} من أصل {total} عضو",
 	"noResultsFound": "لم يتم العثور على أعضاء تطابق بحثك",

@@ -12,7 +12,7 @@
 	}>();
 
 	let searchInput: HTMLInputElement;
-	
+
 	function handleInput(event: Event) {
 		const target = event.target as HTMLInputElement;
 		value = target.value;
@@ -37,30 +37,30 @@
 
 <div class="search-bar">
 	<div class="search-input-container">
-		<svg 
-			class="search-icon" 
-			width="16" 
-			height="16" 
-			viewBox="0 0 16 16" 
-			fill="none" 
+		<svg
+			class="search-icon"
+			width="16"
+			height="16"
+			viewBox="0 0 16 16"
+			fill="none"
 			xmlns="http://www.w3.org/2000/svg"
 		>
-			<path 
-				d="M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z" 
-				stroke="currentColor" 
-				stroke-width="1.5" 
-				stroke-linecap="round" 
+			<path
+				d="M7 12C9.76142 12 12 9.76142 12 7C12 4.23858 9.76142 2 7 2C4.23858 2 2 4.23858 2 7C2 9.76142 4.23858 12 7 12Z"
+				stroke="currentColor"
+				stroke-width="1.5"
+				stroke-linecap="round"
 				stroke-linejoin="round"
 			/>
-			<path 
-				d="M14 14L10.5 10.5" 
-				stroke="currentColor" 
-				stroke-width="1.5" 
-				stroke-linecap="round" 
+			<path
+				d="M14 14L10.5 10.5"
+				stroke="currentColor"
+				stroke-width="1.5"
+				stroke-linecap="round"
 				stroke-linejoin="round"
 			/>
 		</svg>
-		
+
 		<input
 			bind:this={searchInput}
 			type="text"
@@ -71,7 +71,7 @@
 			on:input={handleInput}
 			on:keydown={handleKeydown}
 		/>
-		
+
 		{#if value}
 			<button
 				type="button"
@@ -80,12 +80,18 @@
 				{disabled}
 				aria-label="Clear search"
 			>
-				<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-					<path 
-						d="M12 4L4 12M4 4L12 12" 
-						stroke="currentColor" 
-						stroke-width="1.5" 
-						stroke-linecap="round" 
+				<svg
+					width="16"
+					height="16"
+					viewBox="0 0 16 16"
+					fill="none"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						d="M12 4L4 12M4 4L12 12"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
 						stroke-linejoin="round"
 					/>
 				</svg>
@@ -122,13 +128,15 @@
 		font-size: 0.875rem;
 		background: var(--widget-background, #ffffff);
 		color: var(--widget-text-color, #374151);
-		transition: border-color 0.2s, box-shadow 0.2s;
+		transition:
+			border-color 0.2s,
+			box-shadow 0.2s;
 	}
 
 	.search-input:focus {
 		outline: none;
 		border-color: var(--widget-primary-color, #1f2937);
-		box-shadow: 0 0 0 2px var(--widget-primary-color, #1f2937)25;
+		box-shadow: 0 0 0 2px var(--widget-primary-color, #1f2937) 25;
 	}
 
 	.search-input:disabled {
@@ -146,7 +154,9 @@
 		cursor: pointer;
 		color: var(--widget-text-color, #6b7280);
 		border-radius: 4px;
-		transition: color 0.2s, background-color 0.2s;
+		transition:
+			color 0.2s,
+			background-color 0.2s;
 	}
 
 	.clear-button:hover:not(:disabled) {
@@ -183,7 +193,7 @@
 
 	:global(.ghost-member-directory--dark) .search-input:focus {
 		border-color: var(--widget-primary-color, #60a5fa);
-		box-shadow: 0 0 0 2px var(--widget-primary-color, #60a5fa)25;
+		box-shadow: 0 0 0 2px var(--widget-primary-color, #60a5fa) 25;
 	}
 
 	:global(.ghost-member-directory--dark) .search-input:disabled {

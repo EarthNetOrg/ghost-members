@@ -5,6 +5,7 @@
 	"searchMembers": "Buscar miembros...",
 	"filterByTier": "Filtrar por nivel",
 	"sortBy": "Ordenar por",
+	"membersCount": "{count} miembros",
 	"joinedOn": "Se unió el {date}",
 	"showingResults": "Mostrando {start}-{end} de {total} miembros",
 	"noResultsFound": "No se encontraron miembros que coincidan con su búsqueda",

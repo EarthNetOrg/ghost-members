@@ -24,7 +24,7 @@ export class ApiCache {
 	private generateKey(endpoint: string, params: Record<string, any>): string {
 		const sortedParams = Object.keys(params)
 			.sort()
-			.map(key => `${key}=${params[key]}`)
+			.map((key) => `${key}=${params[key]}`)
 			.join('&');
 		return `${endpoint}?${sortedParams}`;
 	}
@@ -67,12 +67,7 @@ export class ApiCache {
 		return entry.data;
 	}
 
-	set<T>(
-		endpoint: string, 
-		params: Record<string, any> = {}, 
-		data: T, 
-		ttl?: number
-	): void {
+	set<T>(endpoint: string, params: Record<string, any> = {}, data: T, ttl?: number): void {
 		// Ensure we don't exceed max size
 		while (this.cache.size >= this.maxSize) {
 			this.evictOldest();
@@ -149,28 +144,28 @@ export class CachedGhostApiClient {
 	async getMembers(options: any = {}): Promise<GhostApiResponse<GhostMember>> {
 		const cacheKey = 'members';
 		const cached = this.cache.get<GhostApiResponse<GhostMember>>(cacheKey, options);
-		
+
 		if (cached) {
 			return cached;
 		}
 
 		const result = await this.apiClient.getMembers(options);
 		this.cache.set(cacheKey, options, result);
-		
+
 		return result;
 	}
 
 	async getMember(id: string): Promise<{ members: GhostMember[] }> {
 		const cacheKey = `member-${id}`;
 		const cached = this.cache.get<{ members: GhostMember[] }>(cacheKey);
-		
+
 		if (cached) {
 			return cached;
 		}
 
 		const result = await this.apiClient.getMember(id);
 		this.cache.set(cacheKey, {}, result, 10 * 60 * 1000); // Cache individual members longer
-		
+
 		return result;
 	}
 
@@ -179,14 +174,14 @@ export class CachedGhostApiClient {
 		const cacheKey = 'search';
 		const params = { query, ...options };
 		const cached = this.cache.get<GhostApiResponse<GhostMember>>(cacheKey, params);
-		
+
 		if (cached) {
 			return cached;
 		}
 
 		const result = await this.apiClient.searchMembers(query, options);
 		this.cache.set(cacheKey, params, result, 2 * 60 * 1000); // Shorter TTL for searches
-		
+
 		return result;
 	}
 
@@ -194,44 +189,50 @@ export class CachedGhostApiClient {
 		const cacheKey = 'members-by-tier';
 		const params = { tier, ...options };
 		const cached = this.cache.get<GhostApiResponse<GhostMember>>(cacheKey, params);
-		
+
 		if (cached) {
 			return cached;
 		}
 
 		const result = await this.apiClient.getMembersByTier(tier, options);
 		this.cache.set(cacheKey, params, result);
-		
+
 		return result;
 	}
 
-	async getMembersByLabel(label: string, options: any = {}): Promise<GhostApiResponse<GhostMember>> {
+	async getMembersByLabel(
+		label: string,
+		options: any = {}
+	): Promise<GhostApiResponse<GhostMember>> {
 		const cacheKey = 'members-by-label';
 		const params = { label, ...options };
 		const cached = this.cache.get<GhostApiResponse<GhostMember>>(cacheKey, params);
-		
+
 		if (cached) {
 			return cached;
 		}
 
 		const result = await this.apiClient.getMembersByLabel(label, options);
 		this.cache.set(cacheKey, params, result);
-		
+
 		return result;
 	}
 
-	async getMembersWithFilters(filters: any, options: any = {}): Promise<GhostApiResponse<GhostMember>> {
+	async getMembersWithFilters(
+		filters: any,
+		options: any = {}
+	): Promise<GhostApiResponse<GhostMember>> {
 		const cacheKey = 'members-filtered';
 		const params = { filters, ...options };
 		const cached = this.cache.get<GhostApiResponse<GhostMember>>(cacheKey, params);
-		
+
 		if (cached) {
 			return cached;
 		}
 
 		const result = await this.apiClient.getMembersWithFilters(filters, options);
 		this.cache.set(cacheKey, params, result);
-		
+
 		return result;
 	}
 
