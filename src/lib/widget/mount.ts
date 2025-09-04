@@ -86,9 +86,8 @@ export class WidgetMounter {
 				};
 			}
 
-			// Create configuration
-			const config = ConfigManager.fromWindowConfig();
-			config.update(options);
+			// Create configuration - use constructor to avoid potential static method issues
+			const config = new ConfigManager(options);
 
 			const validation = config.validateConfig();
 			if (!validation.isValid) {
@@ -128,14 +127,47 @@ export class WidgetMounter {
 			targetElement.innerHTML = '';
 			targetElement.appendChild(widgetContainer);
 
+			// Fetch initial data from server API
+			const apiUrl = new URL('/api/widget/members', window.location.origin);
+			
+			// Add configuration parameters to API call
+			apiUrl.searchParams.set('lang', configData.defaultLanguage);
+			apiUrl.searchParams.set('theme', configData.widgetTheme);
+			apiUrl.searchParams.set('pageSize', configData.defaultPageSize.toString());
+			apiUrl.searchParams.set('search', configData.enableSearch.toString());
+			apiUrl.searchParams.set('filters', configData.enableFilters.toString());
+			apiUrl.searchParams.set('avatars', configData.showAvatars.toString());
+			apiUrl.searchParams.set('joinDates', configData.showJoinDates.toString());
+			apiUrl.searchParams.set('memberCount', configData.showMemberCount.toString());
+
+			console.log('Fetching data from server API:', apiUrl.toString());
+			const response = await fetch(apiUrl);
+			if (!response.ok) {
+				throw new Error(`Server API error: ${response.status} ${response.statusText}`);
+			}
+
+			const apiResult = await response.json();
+			if (!apiResult.success) {
+				throw new Error(apiResult.message || 'Failed to fetch data from server');
+			}
+
+			const serverData = apiResult.data;
+
 			// Dynamic import of the main widget component
 			const MemberDirectoryWidget = await import('./MemberDirectoryWidget.svelte');
 
-			// Create Svelte component instance (Svelte 5 API)
+			// Create Svelte component instance (Svelte 5 API) with server data
 			const svelteApp = mount(MemberDirectoryWidget.default, {
 				target: widgetContainer,
 				props: {
-					config: config
+					config: config,
+					members: serverData.members,
+					totalMembers: serverData.totalMembers,
+					currentPage: serverData.currentPage,
+					totalPages: serverData.totalPages,
+					loading: false,
+					initialSearchQuery: serverData.searchQuery,
+					initialFilters: serverData.filters
 				}
 			});
 

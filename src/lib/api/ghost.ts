@@ -1,3 +1,5 @@
+import GhostAdminAPI from '@tryghost/admin-api';
+import './ghost-admin-api.d.ts';
 import type { GhostMember, GhostApiResponse, MemberFilters } from '../config/types.js';
 import type { ConfigManager } from '../config/index.js';
 
@@ -21,7 +23,7 @@ export class GhostApiError extends Error {
 		message: string,
 		public statusCode?: number,
 		public ghostCode?: string,
-		public details?: any
+		public details?: unknown
 	) {
 		super(message);
 		this.name = 'GhostApiError';
@@ -29,16 +31,18 @@ export class GhostApiError extends Error {
 }
 
 export class GhostApiClient {
-	private baseUrl: string;
-	private apiKey: string;
-	private timeout: number;
+	private api: GhostAdminAPI;
 	private maxRetries: number;
 
 	constructor(options: GhostApiOptions) {
-		this.baseUrl = options.baseUrl.replace(/\/$/, '');
-		this.apiKey = options.apiKey;
-		this.timeout = options.timeout || 5000;
 		this.maxRetries = options.maxRetries || 3;
+		
+		// Initialize the official Ghost Admin API client
+		this.api = new GhostAdminAPI({
+			url: options.baseUrl,
+			key: options.apiKey,
+			version: 'v5.0'
+		});
 	}
 
 	static fromConfig(config: ConfigManager): GhostApiClient {
@@ -51,116 +55,73 @@ export class GhostApiClient {
 		});
 	}
 
-	private async makeRequest<T>(
-		endpoint: string,
-		params: Record<string, string | number> = {},
-		retryCount = 0
-	): Promise<T> {
-		const url = new URL(`${this.baseUrl}/ghost/api/admin/${endpoint}`);
-		
-		// Add API key
-		url.searchParams.set('key', this.apiKey);
-		
-		// Add other parameters
-		Object.entries(params).forEach(([key, value]) => {
-			url.searchParams.set(key, value.toString());
-		});
-
-		const controller = new AbortController();
-		const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
+	private async retryOperation<T>(operation: () => Promise<T>, retryCount = 0): Promise<T> {
 		try {
-			const response = await fetch(url.toString(), {
-				method: 'GET',
-				headers: {
-					'Accept': 'application/json',
-					'User-Agent': 'Ghost-Member-Directory/1.0'
-				},
-				signal: controller.signal
-			});
-
-			clearTimeout(timeoutId);
-
-			if (!response.ok) {
-				let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-				let ghostCode: string | undefined;
-				let details: any;
-
-				try {
-					const errorData = await response.json();
-					if (errorData.errors && errorData.errors.length > 0) {
-						const error = errorData.errors[0];
-						errorMessage = error.message || errorMessage;
-						ghostCode = error.type || error.errorType;
-						details = error.details || error.context;
-					}
-				} catch {
-					// Ignore JSON parsing errors for error responses
-				}
-
-				// Retry on server errors (5xx) and specific client errors
-				const shouldRetry = 
-					response.status >= 500 || 
-					response.status === 429 || // Rate limit
-					response.status === 408;   // Request timeout
-
-				if (shouldRetry && retryCount < this.maxRetries) {
-					// Exponential backoff: 1s, 2s, 4s
-					const delay = Math.pow(2, retryCount) * 1000;
-					await new Promise(resolve => setTimeout(resolve, delay));
-					return this.makeRequest<T>(endpoint, params, retryCount + 1);
-				}
-
-				throw new GhostApiError(errorMessage, response.status, ghostCode, details);
-			}
-
-			const data = await response.json();
-			return data;
+			return await operation();
 		} catch (error) {
-			clearTimeout(timeoutId);
+			// Check if we should retry
+			const shouldRetry = 
+				retryCount < this.maxRetries && 
+				(error instanceof Error && (
+					error.message.includes('timeout') ||
+					error.message.includes('network') ||
+					error.message.includes('429') ||
+					error.message.includes('5')
+				));
 
-			if (error instanceof GhostApiError) {
-				throw error;
-			}
-
-			if (error instanceof Error && error.name === 'AbortError') {
-				if (retryCount < this.maxRetries) {
-					return this.makeRequest<T>(endpoint, params, retryCount + 1);
-				}
-				throw new GhostApiError('Request timeout', 408);
-			}
-
-			// Network or other errors
-			if (retryCount < this.maxRetries) {
+			if (shouldRetry) {
+				// Exponential backoff: 1s, 2s, 4s
 				const delay = Math.pow(2, retryCount) * 1000;
 				await new Promise(resolve => setTimeout(resolve, delay));
-				return this.makeRequest<T>(endpoint, params, retryCount + 1);
+				return this.retryOperation(operation, retryCount + 1);
 			}
 
-			throw new GhostApiError(
-				error instanceof Error ? error.message : 'Unknown error occurred'
-			);
+			// Convert to our error format
+			if (error instanceof Error) {
+				throw new GhostApiError(error.message);
+			}
+			throw error;
 		}
 	}
 
 	async getMembers(options: MemberQueryOptions = {}): Promise<GhostApiResponse<GhostMember>> {
-		const params: Record<string, string | number> = {
-			page: options.page || 1,
-			limit: options.limit || 15,
-			include: options.include || 'labels,newsletters',
-			order: options.order || 'created_at DESC'
-		};
+		return this.retryOperation(async () => {
+			const queryOptions = {
+				page: options.page || 1,
+				limit: options.limit || 15,
+				include: options.include || 'labels,newsletters',
+				order: options.order || 'created_at DESC',
+				...(options.filter && { filter: options.filter })
+			};
 
-		if (options.filter) {
-			params.filter = options.filter;
-		}
-
-		return this.makeRequest<GhostApiResponse<GhostMember>>('members', params);
+			const response = await this.api.members.browse(queryOptions);
+			
+			// Get the actual response with proper pagination info
+			const responseData = response as any;
+			
+			// Transform the response to match our expected format
+			return {
+				data: responseData,
+				meta: {
+					pagination: {
+						page: queryOptions.page,
+						limit: queryOptions.limit,
+						pages: responseData.meta?.pagination?.pages || Math.ceil((responseData.length || 0) / queryOptions.limit),
+						total: responseData.meta?.pagination?.total || responseData.length || 0,
+						next: responseData.meta?.pagination?.next || undefined,
+						prev: responseData.meta?.pagination?.prev || undefined
+					}
+				}
+			};
+		});
 	}
 
 	async getMember(id: string): Promise<{ members: GhostMember[] }> {
-		return this.makeRequest<{ members: GhostMember[] }>(`members/${id}`, {
-			include: 'labels,newsletters'
+		return this.retryOperation(async () => {
+			const member = await this.api.members.read({ id }, {
+				include: 'labels,newsletters'
+			});
+			return { members: [member] };
 		});
 	}
 
@@ -274,28 +235,27 @@ export class GhostApiClient {
 		});
 	}
 
-	async testConnection(): Promise<{ success: boolean; message: string; siteInfo?: any }> {
-		try {
-			// Test with a simple members request with limit 1
-			const response = await this.getMembers({ limit: 1 });
-			return {
-				success: true,
-				message: 'Connection successful',
-				siteInfo: {
-					totalMembers: response.meta?.pagination?.total || 0
-				}
-			};
-		} catch (error) {
-			if (error instanceof GhostApiError) {
+	async testConnection(): Promise<{ success: boolean; message: string; siteInfo?: unknown }> {
+		return this.retryOperation(async () => {
+			try {
+				// Test with a simple site info request
+				const site = await this.api.site.read();
+				const members = await this.api.members.browse({ limit: 1 });
+				
+				return {
+					success: true,
+					message: 'Connection successful',
+					siteInfo: {
+						title: site.title,
+						totalMembers: members.meta?.pagination?.total || 0
+					}
+				};
+			} catch (error) {
 				return {
 					success: false,
-					message: `Ghost API Error: ${error.message}`,
+					message: error instanceof Error ? error.message : 'Unknown connection error'
 				};
 			}
-			return {
-				success: false,
-				message: error instanceof Error ? error.message : 'Unknown connection error'
-			};
-		}
+		});
 	}
 }

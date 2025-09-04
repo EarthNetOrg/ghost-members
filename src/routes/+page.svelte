@@ -189,33 +189,62 @@
 		<h2>Embedding Instructions</h2>
 		<p>This widget can be embedded in your Ghost theme or website using various methods:</p>
 		
-		<h3>Method 1: Direct Script Include</h3>
+		<h3>Method 1: Iframe Embed (Recommended)</h3>
+		<pre><code>&lt;!-- Simple iframe embed - works anywhere without theme modifications --&gt;
+&lt;iframe 
+  src="{currentUrl}/embed?lang=en&amp;theme=light&amp;pageSize=24"
+  width="100%" 
+  height="600"
+  frameborder="0"
+  title="Member Directory"
+  style="border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+&gt;&lt;/iframe&gt;</code></pre>
+
+		<h3>Method 2: Direct Script Include</h3>
 		<pre><code>&lt;!-- Add to your Ghost theme's default.hbs before closing &lt;/body&gt; tag --&gt;
 &lt;div id="ghost-member-directory"&gt;&lt;/div&gt;
 &lt;script src="{currentUrl}/widget.js"&gt;&lt;/script&gt;
 &lt;script&gt;
-  GhostMemberDirectory.mount('#ghost-member-directory', &#123;
-    defaultLanguage: 'en',
-    widgetTheme: 'light',
+  GhostMemberDirectory.mount(&apos;#ghost-member-directory&apos;, &lbrace;
+    defaultLanguage: &apos;en&apos;,
+    widgetTheme: &apos;light&apos;,
     defaultPageSize: 24
-  &#125;);
+  &rbrace;);
 &lt;/script&gt;</code></pre>
 
-		<h3>Method 2: ESM Import</h3>
-		<pre><code>import &#123; WidgetMounter &#125; from './path/to/widget.js';
+		<h3>Method 3: ESM Import</h3>
+		<pre><code>import &lbrace; WidgetMounter &rbrace; from &apos;./path/to/widget.js&apos;;
 
-const result = await WidgetMounter.mount('#container', &#123;
-  defaultLanguage: 'en',
-  widgetTheme: 'light',
+const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
+  defaultLanguage: &apos;en&apos;,
+  widgetTheme: &apos;light&apos;,
   enableSearch: true,
   enableFilters: true,
   showAvatars: true,
   showJoinDates: true,
   showMemberCount: true,
   defaultPageSize: 24
-&#125;);</code></pre>
+&rbrace;);</code></pre>
 
 		<h3>Configuration Options</h3>
+		
+		<h4>Iframe URL Parameters</h4>
+		<ul>
+			<li><strong>lang:</strong> 'en', 'ar', 'he', 'es', 'fr', 'de', 'ru'</li>
+			<li><strong>theme:</strong> 'light' or 'dark'</li>
+			<li><strong>pageSize:</strong> Number of members per page (6-50)</li>
+			<li><strong>search:</strong> 'true' or 'false' - Enable search</li>
+			<li><strong>filters:</strong> 'true' or 'false' - Enable filters</li>
+			<li><strong>avatars:</strong> 'true' or 'false' - Show avatars</li>
+			<li><strong>joinDates:</strong> 'true' or 'false' - Show join dates</li>
+			<li><strong>memberCount:</strong> 'true' or 'false' - Show member count</li>
+		</ul>
+		
+		<p><strong>Example iframe with custom parameters:</strong></p>
+		<pre><code>&lt;iframe src="{currentUrl}/embed?lang=ar&amp;theme=dark&amp;pageSize=12&amp;search=true" 
+        width="100%" height="600"&gt;&lt;/iframe&gt;</code></pre>
+
+		<h4>JavaScript API Options</h4>
 		<ul>
 			<li><strong>defaultLanguage:</strong> 'en', 'ar', 'he', 'es', 'fr', 'de', 'ru'</li>
 			<li><strong>widgetTheme:</strong> 'light' or 'dark'</li>

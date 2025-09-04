@@ -1,8 +1,6 @@
 <script lang="ts">
 	import type { ConfigManager } from '../config/index.js';
-	import { GhostApiClient } from '../api/ghost.js';
-	import { CachedGhostApiClient } from '../api/cache.js';
-	import { onMount } from 'svelte';
+	import { onMount, createEventDispatcher } from 'svelte';
 	import { 
 		memberDirectory, 
 		searchMembers, 
@@ -29,15 +27,20 @@
 	import ErrorMessage from './components/ErrorMessage.svelte';
 
 	export let config: ConfigManager;
+	
+	// Optional props for server-side data
+	export let members: any[] = [];
+	export let totalMembers: number = 0;
+	export let currentPage: number = 1;
+	export let totalPages: number = 1;
+	export let loading: boolean = false;
+	export let initialSearchQuery: string = '';
+	export let initialFilters: any = {};
 
-	let apiClient: CachedGhostApiClient | null = null;
-	let loading = true;
+	// Component state
 	let error: string | null = null;
-	let members: any[] = [];
-	let totalMembers = 0;
-	let currentPage = 1;
-	let searchQuery = '';
-	let selectedFilters: any = {};
+	let searchQuery = initialSearchQuery;
+	let selectedFilters: any = initialFilters;
 
 	// Reactive configuration
 	$: configData = config.get();
@@ -52,101 +55,49 @@
 		console.log('New locale set:', getLocale());
 	}
 
-	onMount(async () => {
-		try {
-			// Set up language - prioritize configured language 
-			console.log('Setting up language. Default:', configData.defaultLanguage);
-			console.log('Available locales:', locales);
-			
-			// Force set the configured language (will also trigger reactive statement above)
-			if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
-				console.log('Setting locale to configured language:', configData.defaultLanguage);
-				setLocale(configData.defaultLanguage as any);
-			} else {
-				console.log('Fallback to English');
-				setLocale('en' as any);
-			}
-			
-			console.log('Current locale after setting:', getLocale());
+	const dispatch = createEventDispatcher<{
+		search: string;
+		filterChange: any;
+		pageChange: number;
+	}>();
 
-			// Initialize API client
-			const ghostClient = GhostApiClient.fromConfig(config);
-			
-			if (configData.enableCaching) {
-				apiClient = new CachedGhostApiClient(ghostClient, {
-					ttl: configData.cacheDuration * 1000,
-					maxSize: 100
-				});
-			} else {
-				apiClient = ghostClient as any;
-			}
-
-			// Test connection
-			const connectionTest = await apiClient.testConnection();
-			if (!connectionTest.success) {
-				throw new Error(connectionTest.message);
-			}
-
-			// Load initial data
-			await loadMembers();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to initialize widget';
-			loading = false;
+	onMount(() => {
+		// Set up language - prioritize configured language 
+		console.log('Setting up language. Default:', configData.defaultLanguage);
+		console.log('Available locales:', locales);
+		
+		// Force set the configured language (will also trigger reactive statement above)
+		if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
+			console.log('Setting locale to configured language:', configData.defaultLanguage);
+			setLocale(configData.defaultLanguage as any);
+		} else {
+			console.log('Fallback to English');
+			setLocale('en' as any);
 		}
+		
+		console.log('Current locale after setting:', getLocale());
+		console.log('Widget mounted in server-side only mode');
 	});
 
-	async function loadMembers() {
-		if (!apiClient) return;
-		
-		try {
-			loading = true;
-			error = null;
+	// loadMembers function removed - we now only use server-side data
 
-			const options = {
-				page: currentPage,
-				limit: pageSize,
-				order: 'created_at DESC'
-			};
-
-			let response;
-			if (searchQuery.trim()) {
-				response = await apiClient.searchMembers(searchQuery, options);
-			} else if (Object.keys(selectedFilters).length > 0) {
-				response = await apiClient.getMembersWithFilters(selectedFilters, options);
-			} else {
-				response = await apiClient.getMembers(options);
-			}
-
-			members = response.data || [];
-			totalMembers = response.meta?.pagination?.total || 0;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to load members';
-			members = [];
-			totalMembers = 0;
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function handleSearch(query: string) {
+	function handleSearch(query: string) {
 		searchQuery = query;
-		currentPage = 1;
-		await loadMembers();
+		dispatch('search', query);
 	}
 
-	async function handleFilterChange(filters: any) {
+	function handleFilterChange(filters: any) {
 		selectedFilters = filters;
-		currentPage = 1;
-		await loadMembers();
+		dispatch('filterChange', filters);
 	}
 
-	async function handlePageChange(page: number) {
-		currentPage = page;
-		await loadMembers();
+	function handlePageChange(page: number) {
+		dispatch('pageChange', page);
 	}
 
 	function handleRetry() {
-		loadMembers();
+		// Retry is handled by server-side data refetch
+		dispatch('retry');
 	}
 </script>
 
@@ -234,11 +185,11 @@
 			/>
 
 			<!-- Pagination -->
-			{#if totalMembers > pageSize}
+			{#if totalMembers > 0}
 				<div class="directory-pagination">
 					<Pagination
 						currentPage={currentPage}
-						totalPages={Math.ceil(totalMembers / pageSize)}
+						totalPages={totalPages}
 						disabled={loading}
 						showPageNumbers={true}
 						maxVisiblePages={5}
