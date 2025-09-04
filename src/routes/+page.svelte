@@ -191,18 +191,18 @@
 &lt;div id="ghost-member-directory"&gt;&lt;/div&gt;
 &lt;script src="https://your-domain.com/widget.js"&gt;&lt;/script&gt;
 &lt;script&gt;
-  GhostMemberDirectory.mount('#ghost-member-directory', {
+  GhostMemberDirectory.mount('#ghost-member-directory', &#123;
     ghostAdminApiUrl: 'https://yourblog.ghost.io',
     ghostAdminApiKey: 'your-admin-api-key',
     defaultLanguage: 'en',
     widgetTheme: 'light'
-  });
+  &#125;);
 &lt;/script&gt;</code></pre>
 
 		<h3>Method 2: ESM Import</h3>
-		<pre><code>import { WidgetMounter } from './path/to/widget.js';
+		<pre><code>import &#123; WidgetMounter &#125; from './path/to/widget.js';
 
-const result = await WidgetMounter.mount('#container', {
+const result = await WidgetMounter.mount('#container', &#123;
   ghostAdminApiUrl: 'https://yourblog.ghost.io',
   ghostAdminApiKey: 'your-admin-api-key',
   defaultLanguage: 'en',
@@ -212,7 +212,7 @@ const result = await WidgetMounter.mount('#container', {
   showAvatars: true,
   showJoinDates: true,
   showMemberCount: true
-});</code></pre>
+&#125;);</code></pre>
 
 		<h3>Configuration Options</h3>
 		<ul>
