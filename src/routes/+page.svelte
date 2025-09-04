@@ -192,10 +192,9 @@
 &lt;script src="https://your-domain.com/widget.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   GhostMemberDirectory.mount('#ghost-member-directory', &#123;
-    ghostAdminApiUrl: 'https://yourblog.ghost.io',
-    ghostAdminApiKey: 'your-admin-api-key',
     defaultLanguage: 'en',
-    widgetTheme: 'light'
+    widgetTheme: 'light',
+    defaultPageSize: 24
   &#125;);
 &lt;/script&gt;</code></pre>
 
@@ -203,30 +202,37 @@
 		<pre><code>import &#123; WidgetMounter &#125; from './path/to/widget.js';
 
 const result = await WidgetMounter.mount('#container', &#123;
-  ghostAdminApiUrl: 'https://yourblog.ghost.io',
-  ghostAdminApiKey: 'your-admin-api-key',
   defaultLanguage: 'en',
   widgetTheme: 'light',
   enableSearch: true,
   enableFilters: true,
   showAvatars: true,
   showJoinDates: true,
-  showMemberCount: true
+  showMemberCount: true,
+  defaultPageSize: 24
 &#125;);</code></pre>
 
 		<h3>Configuration Options</h3>
 		<ul>
-			<li><strong>ghostAdminApiUrl:</strong> Your Ghost blog URL</li>
-			<li><strong>ghostAdminApiKey:</strong> Admin API key from Ghost admin</li>
 			<li><strong>defaultLanguage:</strong> 'en', 'ar', 'he', 'es', 'fr', 'de', 'ru'</li>
 			<li><strong>widgetTheme:</strong> 'light' or 'dark'</li>
 			<li><strong>defaultPageSize:</strong> Number of members per page (default: 24)</li>
-			<li><strong>enableSearch:</strong> Enable search functionality</li>
-			<li><strong>enableFilters:</strong> Enable tier filtering</li>
-			<li><strong>showAvatars:</strong> Show member avatars</li>
-			<li><strong>showJoinDates:</strong> Show member join dates</li>
-			<li><strong>showMemberCount:</strong> Show total member count</li>
+			<li><strong>enableSearch:</strong> Enable search functionality (default: true)</li>
+			<li><strong>enableFilters:</strong> Enable tier filtering (default: true)</li>
+			<li><strong>showAvatars:</strong> Show member avatars (default: true)</li>
+			<li><strong>showJoinDates:</strong> Show member join dates (default: true)</li>
+			<li><strong>showMemberCount:</strong> Show total member count (default: true)</li>
+			<li><strong>enableCaching:</strong> Enable API response caching (default: true)</li>
 		</ul>
+
+		<h3>Server Configuration</h3>
+		<p>The widget requires server-side configuration for Ghost API credentials. Set these as environment variables or in your build configuration:</p>
+		<pre><code># Environment variables
+GHOST_ADMIN_API_URL=https://yourblog.ghost.io
+GHOST_ADMIN_API_KEY=your-admin-api-key
+
+# Or configure during build process
+# These credentials should be bundled securely server-side</code></pre>
 
 		<div class="demo-note">
 			<strong>Language Support:</strong> The widget supports Arabic and Hebrew with RTL layout, plus English, Spanish, French, German, and Russian. Use URL parameters like <code>?lang=ar</code> to override the default language.
