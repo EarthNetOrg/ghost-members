@@ -1,6 +1,7 @@
 import type { WidgetConfig, EmbedOptions } from '../config/types.js';
 import { ConfigManager } from '../config/index.js';
 import { browser } from '$app/environment';
+import { mount, unmount } from 'svelte';
 
 export interface MountResult {
 	success: boolean;
@@ -128,10 +129,10 @@ export class WidgetMounter {
 			targetElement.appendChild(widgetContainer);
 
 			// Dynamic import of the main widget component
-			const { MemberDirectoryWidget } = await import('./MemberDirectoryWidget.svelte');
+			const MemberDirectoryWidget = await import('./MemberDirectoryWidget.svelte');
 
-			// Create Svelte component instance
-			const svelteApp = new MemberDirectoryWidget({
+			// Create Svelte component instance (Svelte 5 API)
+			const svelteApp = mount(MemberDirectoryWidget.default, {
 				target: widgetContainer,
 				props: {
 					config: config
@@ -145,11 +146,13 @@ export class WidgetMounter {
 				config: config,
 				unmount: () => {
 					try {
-						svelteApp.$destroy();
-						targetElement.innerHTML = '';
+						// Svelte 5 API - use unmount function
+						unmount(svelteApp);
 						widgetRegistry.unregister(instance.id);
 					} catch (error) {
 						console.error('Error unmounting widget:', error);
+						// Fallback - clear the container
+						targetElement.innerHTML = '';
 					}
 				},
 				update: (newConfig: Partial<WidgetConfig>) => {
@@ -171,8 +174,8 @@ export class WidgetMounter {
 						widgetContainer.classList.remove('ghost-member-directory--rtl');
 					}
 
-					// Trigger Svelte component update
-					svelteApp.$set({ config: config });
+					// Svelte 5 API - no $set method, component should be reactive
+					// The component will automatically update via reactive props
 				},
 				getState: () => {
 					// Return current widget state - will be implemented in the component

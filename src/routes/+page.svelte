@@ -2,29 +2,37 @@
 	import { onMount } from 'svelte';
 	import { WidgetMounter } from '$lib/widget/mount.js';
 	import { ConfigManager } from '$lib/config/index.js';
+	import { page } from '$app/stores';
 	
 	let widgetContainer: HTMLElement;
 	let status: 'loading' | 'success' | 'error' = 'loading';
 	let errorMessage = '';
 	let apiUrl = 'https://canadapt.news';
 	let apiKey = '6761f77c69075304a8e05550:3f693b7ac07da47acb5b094ffcd531af1c0ea7ad0ad8ca1c1d441b94bc18dbc1';
+	// Initialize language from URL parameter if provided
+	$: urlLang = $page.url.searchParams.get('lang');
 	let language = 'en';
 	let theme: 'light' | 'dark' = 'light';
 	let pageSize = 24;
 
 	onMount(async () => {
 		try {
+			// Use URL parameter if provided, otherwise use selected language
+			const effectiveLanguage = urlLang || language;
+			console.log('Using language:', effectiveLanguage, 'from URL:', urlLang, 'from dropdown:', language);
+			
 			const result = await WidgetMounter.mount(widgetContainer, {
 				ghostAdminApiUrl: apiUrl,
 				ghostAdminApiKey: apiKey,
-				defaultLanguage: language,
+				defaultLanguage: effectiveLanguage,
 				widgetTheme: theme,
 				defaultPageSize: pageSize,
 				enableSearch: true,
 				enableFilters: true,
 				showAvatars: true,
 				showJoinDates: true,
-				showMemberCount: true
+				showMemberCount: true,
+				autoDetectLanguage: false // Disable auto-detect for demo so explicit language selection works
 			});
 
 			if (result.success) {
@@ -39,21 +47,36 @@
 		}
 	});
 
+	async function applyConfiguration() {
+		// Update URL parameters to reflect the new configuration
+		const url = new URL(window.location.href);
+		url.searchParams.set('lang', language);
+		window.history.pushState({}, '', url.toString());
+		
+		// Now remount the widget (the reactive statement will pick up the URL change)
+		await remountWidget();
+	}
+
 	async function remountWidget() {
 		status = 'loading';
 		
 		try {
+			// Use URL parameter if provided, otherwise use selected language
+			const effectiveLanguage = urlLang || language;
+			console.log('Remounting with language:', effectiveLanguage, 'from URL:', urlLang, 'from dropdown:', language);
+			
 			const result = await WidgetMounter.mount(widgetContainer, {
 				ghostAdminApiUrl: apiUrl,
 				ghostAdminApiKey: apiKey,
-				defaultLanguage: language,
+				defaultLanguage: effectiveLanguage,
 				widgetTheme: theme,
 				defaultPageSize: pageSize,
 				enableSearch: true,
 				enableFilters: true,
 				showAvatars: true,
 				showJoinDates: true,
-				showMemberCount: true
+				showMemberCount: true,
+				autoDetectLanguage: false // Disable auto-detect for demo so explicit language selection works
 			});
 
 			if (result.success) {
@@ -131,7 +154,7 @@
 		
 		<button 
 			class="remount-button"
-			on:click={remountWidget}
+			on:click={applyConfiguration}
 			disabled={status === 'loading'}
 		>
 			{status === 'loading' ? 'Loading...' : 'Apply Configuration'}
@@ -161,28 +184,11 @@
 
 	<div class="demo-docs">
 		<h2>Embedding Instructions</h2>
-		<p>To embed this widget in your Ghost site, add the following code:</p>
+		<p>This widget can be embedded in your Ghost theme or website using various methods. Full documentation will be available after building the production version with <code>pnpm run build</code>.</p>
 		
-		<h3>Method 1: Script Tag (Recommended)</h3>
-		<pre><code>{`<div id="ghost-member-directory"></div>
-<script src="https://your-cdn.com/ghost-member-directory.js"></script>
-<script>
-GhostMemberDirectory.mount('#ghost-member-directory', {
-  apiUrl: '` + apiUrl + `',
-  apiKey: '` + apiKey + `',
-  language: '` + language + `',
-  theme: '` + theme + `',
-  pageSize: ` + pageSize + `
-});
-</script>`}</code></pre>
-
-		<h3>Method 2: iframe</h3>
-		<pre><code>{`<iframe 
-  src="https://your-widget-domain.com/embed?site=` + encodeURIComponent(apiUrl) + `&theme=` + theme + `&lang=` + language + `"
-  width="100%" 
-  height="600"
-  frameborder="0">
-</iframe>`}</code></pre>
+		<div class="demo-note">
+			<strong>Note:</strong> The widget is currently in development mode. Production embedding instructions will be provided once the build is complete.
+		</div>
 	</div>
 </div>
 
@@ -370,6 +376,27 @@ GhostMemberDirectory.mount('#ghost-member-directory', {
 	.demo-docs code {
 		font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 		line-height: 1.5;
+	}
+
+	.demo-note {
+		margin-top: 1.5rem;
+		padding: 1rem;
+		background: #fef3c7;
+		border: 1px solid #fbbf24;
+		border-radius: 6px;
+		color: #92400e;
+		font-size: 0.875rem;
+	}
+
+	.demo-note strong {
+		font-weight: 600;
+	}
+
+	.demo-note code {
+		background: #fed7aa;
+		padding: 0.125rem 0.25rem;
+		border-radius: 3px;
+		font-size: 0.8125rem;
 	}
 
 	@media (max-width: 768px) {

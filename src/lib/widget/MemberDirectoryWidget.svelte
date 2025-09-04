@@ -3,16 +3,30 @@
 	import { GhostApiClient } from '../api/ghost.js';
 	import { CachedGhostApiClient } from '../api/cache.js';
 	import { onMount } from 'svelte';
-	import * as m from '$lib/paraglide/messages.js';
-	import { setLocale, locales } from '$lib/paraglide/runtime.js';
+	import { 
+		memberDirectory, 
+		searchMembers, 
+		filterByTier, 
+		free, 
+		premium, 
+		loadingMembers, 
+		noResultsFound, 
+		memberSince, 
+		retry,
+		previous,
+		next,
+		page,
+		of
+	} from '$lib/paraglide/messages.js';
+	import { setLocale, locales, getLocale } from '$lib/paraglide/runtime.js';
 	
-	// Components that we'll create
-	// import MemberGrid from './components/MemberGrid.svelte';
-	// import SearchBar from './components/SearchBar.svelte';
-	// import FilterPanel from './components/FilterPanel.svelte';
-	// import Pagination from './components/Pagination.svelte';
-	// import LoadingSpinner from './components/LoadingSpinner.svelte';
-	// import ErrorMessage from './components/ErrorMessage.svelte';
+	// Components
+	import MemberGrid from './components/MemberGrid.svelte';
+	import SearchBar from './components/SearchBar.svelte';
+	import FilterPanel from './components/FilterPanel.svelte';
+	import Pagination from './components/Pagination.svelte';
+	import LoadingSpinner from './components/LoadingSpinner.svelte';
+	import ErrorMessage from './components/ErrorMessage.svelte';
 
 	export let config: ConfigManager;
 
@@ -29,20 +43,31 @@
 	$: configData = config.get();
 	$: isRTL = config.isRTL();
 	$: pageSize = configData.defaultPageSize;
+	
+	// Set the locale immediately when the config changes  
+	$: if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
+		console.log('Language changed to:', configData.defaultLanguage);
+		console.log('Current locale before change:', getLocale());
+		setLocale(configData.defaultLanguage as any);
+		console.log('New locale set:', getLocale());
+	}
 
 	onMount(async () => {
 		try {
-			// Set up language
-			if (configData.autoDetectLanguage) {
-				const browserLang = navigator.language.split('-')[0];
-				if (locales.includes(browserLang as any)) {
-					setLocale(browserLang as any);
-				} else {
-					setLocale(configData.defaultLanguage as any);
-				}
-			} else {
+			// Set up language - prioritize configured language 
+			console.log('Setting up language. Default:', configData.defaultLanguage);
+			console.log('Available locales:', locales);
+			
+			// Force set the configured language (will also trigger reactive statement above)
+			if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
+				console.log('Setting locale to configured language:', configData.defaultLanguage);
 				setLocale(configData.defaultLanguage as any);
+			} else {
+				console.log('Fallback to English');
+				setLocale('en' as any);
 			}
+			
+			console.log('Current locale after setting:', getLocale());
 
 			// Initialize API client
 			const ghostClient = GhostApiClient.fromConfig(config);
@@ -135,7 +160,7 @@
 	<!-- Header -->
 	<div class="directory-header">
 		<h2 class="directory-title">
-			{m.memberDirectory()}
+			{memberDirectory()}
 		</h2>
 		
 		{#if configData.showMemberCount && totalMembers > 0}
@@ -149,37 +174,22 @@
 	{#if configData.enableSearch || configData.enableFilters}
 		<div class="directory-controls">
 			{#if configData.enableSearch}
-				<!-- <SearchBar
+				<SearchBar
 					value={searchQuery}
-					placeholder={m.searchMembers()}
+					placeholder={searchMembers()}
+					disabled={loading}
 					on:search={e => handleSearch(e.detail)}
-				/> -->
-				<div class="search-placeholder">
-					<input
-						type="text"
-						placeholder={m.searchMembers()}
-						bind:value={searchQuery}
-						on:input={e => handleSearch(e.target.value)}
-						class="search-input"
-					/>
-				</div>
+					on:clear={() => handleSearch('')}
+				/>
 			{/if}
 
 			{#if configData.enableFilters}
-				<!-- <FilterPanel
+				<FilterPanel
 					filters={selectedFilters}
+					disabled={loading}
 					on:change={e => handleFilterChange(e.detail)}
-				/> -->
-				<div class="filter-placeholder">
-					<select 
-						class="filter-select"
-						on:change={e => handleFilterChange({ tier: e.target.value })}
-					>
-						<option value="">{m.filterByTier()}</option>
-						<option value="free">{m.free()}</option>
-						<option value="paid">{m.premium()}</option>
-					</select>
-				</div>
+					on:clear={() => handleFilterChange({})}
+				/>
 			{/if}
 		</div>
 	{/if}
@@ -188,102 +198,51 @@
 	<div class="directory-content">
 		{#if loading}
 			<div class="loading-state">
-				<!-- <LoadingSpinner /> -->
-				<div class="loading-placeholder">
-					{m.loadingMembers()}
-				</div>
+				<LoadingSpinner 
+					size="large"
+					message={loadingMembers()}
+				/>
 			</div>
 		{:else if error}
 			<div class="error-state">
-				<!-- <ErrorMessage 
+				<ErrorMessage 
 					message={error}
+					variant="error"
+					size="large"
+					showRetry={true}
+					retryLabel={retry()}
 					on:retry={handleRetry}
-				/> -->
-				<div class="error-placeholder">
-					<p class="error-message">{error}</p>
-					<button 
-						class="retry-button"
-						on:click={handleRetry}
-					>
-						{m.retry()}
-					</button>
-				</div>
+				/>
 			</div>
 		{:else if members.length === 0}
 			<div class="empty-state">
 				<p class="empty-message">
-					{searchQuery ? m.noResultsFound() : 'No members'}
+					{searchQuery ? noResultsFound() : 'No members'}
 				</p>
 			</div>
 		{:else}
 			<!-- Member Grid -->
-			<div class="member-grid">
-				{#each members as member (member.id)}
-					<div class="member-card">
-						{#if configData.showAvatars && member.avatar_image}
-							<div class="member-avatar">
-								<img 
-									src={member.avatar_image} 
-									alt={member.name || 'Member'}
-									loading="lazy"
-								/>
-							</div>
-						{/if}
-						
-						<div class="member-info">
-							<h3 class="member-name">
-								{configData.showRealNames ? member.name : 'Member'}
-							</h3>
-							
-							{#if configData.showJoinDates}
-								<p class="member-joined">
-									{m.memberSince({ date: new Date(member.created_at).toLocaleDateString() })}
-								</p>
-							{/if}
-							
-							{#if member.subscriptions?.length > 0}
-								<div class="member-tiers">
-									{#each member.subscriptions as subscription}
-										<span 
-											class="tier-badge tier-{subscription.tier.type}"
-										>
-											{subscription.tier.type === 'free' ? m.free() : m.premium()}
-										</span>
-									{/each}
-								</div>
-							{/if}
-						</div>
-					</div>
-				{/each}
-			</div>
+			<MemberGrid 
+				{members}
+				showAvatars={configData.showAvatars}
+				showRealNames={configData.showRealNames}
+				showJoinDates={configData.showJoinDates}
+				showTiers={true}
+				{loading}
+				layout="grid"
+			/>
 
 			<!-- Pagination -->
 			{#if totalMembers > pageSize}
 				<div class="directory-pagination">
-					<!-- <Pagination
+					<Pagination
 						currentPage={currentPage}
 						totalPages={Math.ceil(totalMembers / pageSize)}
+						disabled={loading}
+						showPageNumbers={true}
+						maxVisiblePages={5}
 						on:pageChange={e => handlePageChange(e.detail)}
-					/> -->
-					<div class="pagination-placeholder">
-						<button 
-							disabled={currentPage === 1}
-							on:click={() => handlePageChange(currentPage - 1)}
-						>
-							{m.previous()}
-						</button>
-						
-						<span class="page-info">
-							{m.page()} {currentPage} {m.of()} {Math.ceil(totalMembers / pageSize)}
-						</span>
-						
-						<button 
-							disabled={currentPage >= Math.ceil(totalMembers / pageSize)}
-							on:click={() => handlePageChange(currentPage + 1)}
-						>
-							{m.next()}
-						</button>
-					</div>
+					/>
 				</div>
 			{/if}
 		{/if}
@@ -330,32 +289,11 @@
 		flex-wrap: wrap;
 	}
 
-	.search-input {
-		flex: 1;
-		min-width: 200px;
-		padding: 0.5rem 0.75rem;
-		border: 1px solid rgba(0, 0, 0, 0.2);
-		border-radius: var(--widget-border-radius, 8px);
-		font-size: 0.875rem;
-		background: var(--widget-background, #ffffff);
-		color: var(--widget-text-color, #374151);
-	}
-
-	.filter-select {
-		padding: 0.5rem 0.75rem;
-		border: 1px solid rgba(0, 0, 0, 0.2);
-		border-radius: var(--widget-border-radius, 8px);
-		font-size: 0.875rem;
-		background: var(--widget-background, #ffffff);
-		color: var(--widget-text-color, #374151);
-	}
 
 	.directory-content {
 		min-height: 200px;
 	}
 
-	.loading-placeholder,
-	.error-placeholder,
 	.empty-state {
 		display: flex;
 		flex-direction: column;
@@ -365,147 +303,18 @@
 		text-align: center;
 	}
 
-	.error-message {
-		margin: 0 0 1rem;
-		color: #dc2626;
-	}
-
-	.retry-button {
-		padding: 0.5rem 1rem;
-		background: var(--widget-primary-color, #1f2937);
-		color: white;
-		border: none;
-		border-radius: var(--widget-border-radius, 8px);
-		cursor: pointer;
-		font-size: 0.875rem;
-	}
-
-	.member-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: 1rem;
-		margin-bottom: 2rem;
-	}
-
-	.member-card {
-		background: var(--widget-background, #ffffff);
-		border: 1px solid rgba(0, 0, 0, 0.1);
-		border-radius: var(--widget-border-radius, 8px);
-		padding: 1rem;
-		display: flex;
-		gap: 0.75rem;
-		transition: box-shadow 0.2s;
-	}
-
-	.member-card:hover {
-		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	.member-avatar img {
-		width: 48px;
-		height: 48px;
-		border-radius: 50%;
-		object-fit: cover;
-	}
-
-	.member-info {
-		flex: 1;
-	}
-
-	.member-name {
-		margin: 0 0 0.25rem;
-		font-size: 1rem;
-		font-weight: 500;
-		color: var(--widget-primary-color, #1f2937);
-	}
-
-	.member-joined {
-		margin: 0 0 0.5rem;
-		font-size: 0.75rem;
-		color: var(--widget-text-color, #6b7280);
-	}
-
-	.member-tiers {
-		display: flex;
-		gap: 0.25rem;
-		flex-wrap: wrap;
-	}
-
-	.tier-badge {
-		padding: 0.125rem 0.375rem;
-		font-size: 0.625rem;
-		font-weight: 500;
-		text-transform: uppercase;
-		border-radius: 0.25rem;
-	}
-
-	.tier-free {
-		background: #e5e7eb;
-		color: #374151;
-	}
-
-	.tier-paid {
-		background: var(--widget-primary-color, #1f2937);
-		color: white;
-	}
-
-	.pagination-placeholder {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 1rem;
-		padding: 1rem;
-	}
-
-	.pagination-placeholder button {
-		padding: 0.5rem 1rem;
-		background: var(--widget-primary-color, #1f2937);
-		color: white;
-		border: none;
-		border-radius: var(--widget-border-radius, 8px);
-		cursor: pointer;
-		font-size: 0.875rem;
-	}
-
-	.pagination-placeholder button:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	.page-info {
-		font-size: 0.875rem;
-		color: var(--widget-text-color, #6b7280);
-	}
 
 	/* RTL adjustments */
 	.ghost-member-directory--rtl .directory-header {
 		flex-direction: row-reverse;
 	}
 
-	.ghost-member-directory--rtl .member-card {
-		flex-direction: row-reverse;
-	}
-
-	.ghost-member-directory--rtl .member-tiers {
-		justify-content: flex-end;
-	}
 
 	/* Dark theme adjustments */
 	.ghost-member-directory--dark .directory-header {
 		border-bottom-color: rgba(255, 255, 255, 0.1);
 	}
 
-	.ghost-member-directory--dark .search-input,
-	.ghost-member-directory--dark .filter-select {
-		border-color: rgba(255, 255, 255, 0.2);
-		background: #374151;
-		color: #f9fafb;
-	}
-
-	.ghost-member-directory--dark .member-card {
-		background: #374151;
-		border-color: rgba(255, 255, 255, 0.1);
-	}
 
 	/* Responsive design */
 	@media (max-width: 640px) {
@@ -523,12 +332,5 @@
 			flex-direction: column;
 		}
 
-		.search-input {
-			min-width: unset;
-		}
-
-		.member-grid {
-			grid-template-columns: 1fr;
-		}
 	}
 </style>
