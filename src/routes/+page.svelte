@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { WidgetMounter } from '$lib/widget/mount.js';
-	import { ConfigManager } from '$lib/config/index.js';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
 	
 	let widgetContainer: HTMLElement;
 	let status: 'loading' | 'success' | 'error' = 'loading';
@@ -14,6 +14,9 @@
 	let language = 'en';
 	let theme: 'light' | 'dark' = 'light';
 	let pageSize = 24;
+	
+	// Get current server URL for embedding instructions
+	$: currentUrl = browser ? window.location.origin : 'https://your-domain.com';
 
 	onMount(async () => {
 		try {
@@ -189,7 +192,7 @@
 		<h3>Method 1: Direct Script Include</h3>
 		<pre><code>&lt;!-- Add to your Ghost theme's default.hbs before closing &lt;/body&gt; tag --&gt;
 &lt;div id="ghost-member-directory"&gt;&lt;/div&gt;
-&lt;script src="https://your-domain.com/widget.js"&gt;&lt;/script&gt;
+&lt;script src="{currentUrl}/widget.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   GhostMemberDirectory.mount('#ghost-member-directory', &#123;
     defaultLanguage: 'en',
