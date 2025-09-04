@@ -184,10 +184,52 @@
 
 	<div class="demo-docs">
 		<h2>Embedding Instructions</h2>
-		<p>This widget can be embedded in your Ghost theme or website using various methods. Full documentation will be available after building the production version with <code>pnpm run build</code>.</p>
+		<p>This widget can be embedded in your Ghost theme or website using various methods:</p>
 		
+		<h3>Method 1: Direct Script Include</h3>
+		<pre><code>&lt;!-- Add to your Ghost theme's default.hbs before closing &lt;/body&gt; tag --&gt;
+&lt;div id="ghost-member-directory"&gt;&lt;/div&gt;
+&lt;script src="https://your-domain.com/widget.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  GhostMemberDirectory.mount('#ghost-member-directory', {
+    ghostAdminApiUrl: 'https://yourblog.ghost.io',
+    ghostAdminApiKey: 'your-admin-api-key',
+    defaultLanguage: 'en',
+    widgetTheme: 'light'
+  });
+&lt;/script&gt;</code></pre>
+
+		<h3>Method 2: ESM Import</h3>
+		<pre><code>import { WidgetMounter } from './path/to/widget.js';
+
+const result = await WidgetMounter.mount('#container', {
+  ghostAdminApiUrl: 'https://yourblog.ghost.io',
+  ghostAdminApiKey: 'your-admin-api-key',
+  defaultLanguage: 'en',
+  widgetTheme: 'light',
+  enableSearch: true,
+  enableFilters: true,
+  showAvatars: true,
+  showJoinDates: true,
+  showMemberCount: true
+});</code></pre>
+
+		<h3>Configuration Options</h3>
+		<ul>
+			<li><strong>ghostAdminApiUrl:</strong> Your Ghost blog URL</li>
+			<li><strong>ghostAdminApiKey:</strong> Admin API key from Ghost admin</li>
+			<li><strong>defaultLanguage:</strong> 'en', 'ar', 'he', 'es', 'fr', 'de', 'ru'</li>
+			<li><strong>widgetTheme:</strong> 'light' or 'dark'</li>
+			<li><strong>defaultPageSize:</strong> Number of members per page (default: 24)</li>
+			<li><strong>enableSearch:</strong> Enable search functionality</li>
+			<li><strong>enableFilters:</strong> Enable tier filtering</li>
+			<li><strong>showAvatars:</strong> Show member avatars</li>
+			<li><strong>showJoinDates:</strong> Show member join dates</li>
+			<li><strong>showMemberCount:</strong> Show total member count</li>
+		</ul>
+
 		<div class="demo-note">
-			<strong>Note:</strong> The widget is currently in development mode. Production embedding instructions will be provided once the build is complete.
+			<strong>Language Support:</strong> The widget supports Arabic and Hebrew with RTL layout, plus English, Spanish, French, German, and Russian. Use URL parameters like <code>?lang=ar</code> to override the default language.
 		</div>
 	</div>
 </div>
