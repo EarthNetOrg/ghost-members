@@ -71,8 +71,6 @@
 			return member.username;
 		}
 
-		console.log('MemberGrid: member:', member);
-
 		return 'Member';
 	}
 
@@ -90,7 +88,6 @@
 	class:member-grid--loading={loading}
 >
 	{#each members as member (member.id)}
-	{console.log('MemberGrid: member:', member)}
 		<!-- svelte-ignore a11y-no-noninteractive-tabindex -->
 		<div
 			class="member-card"

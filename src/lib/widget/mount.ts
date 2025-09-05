@@ -136,7 +136,6 @@ export class WidgetMounter {
 			apiUrl.searchParams.set('joinDates', configData.showJoinDates.toString());
 			apiUrl.searchParams.set('memberCount', configData.showMemberCount.toString());
 
-			console.log('Fetching data from server API:', apiUrl.toString());
 			const response = await fetch(apiUrl);
 			if (!response.ok) {
 				throw new Error(`Server API error: ${response.status} ${response.statusText}`);

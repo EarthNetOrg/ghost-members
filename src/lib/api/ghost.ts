@@ -30,6 +30,19 @@ export class GhostApiError extends Error {
 	}
 }
 
+
+export class GhostApiClientCredentials {
+	// This should be an object with a key that corresponds to an id and two properties: apiUrl and apiKey
+	static getCredentials() {
+		return {
+			canadapt: {
+				apiUrl: 'https://canadapt.news',
+				apiKey: '6761f77c69075304a8e05550:3f693b7ac07da47acb5b094ffcd531af1c0ea7ad0ad8ca1c1d441b94bc18dbc1'
+			}
+		};
+	}
+}
+
 export class GhostApiClient {
 	private api: GhostAdminAPI;
 	private maxRetries: number;

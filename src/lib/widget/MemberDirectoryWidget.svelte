@@ -75,7 +75,6 @@
 		if (configData.defaultLanguage && locales.includes(configData.defaultLanguage as any)) {
 			setLocale(configData.defaultLanguage as any);
 		} else {
-			console.log('Fallback to English');
 			setLocale('en' as any);
 		}
 	});
