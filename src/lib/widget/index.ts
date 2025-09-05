@@ -7,8 +7,6 @@ export type { WidgetConfig, EmbedOptions, WidgetInstance } from '../config/types
 
 // Global exports for script tag embedding
 if (typeof window !== 'undefined') {
-	const { WidgetMounter } = await import('./mount.js');
-
 	// Make available globally
 	(window as any).GhostMemberDirectory = {
 		mount: WidgetMounter.mount,

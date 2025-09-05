@@ -47,11 +47,11 @@ export const load: PageServerLoad = async ({ url }) => {
 			defaultLanguage: urlParams.get('lang') || 'en',
 			widgetTheme: (urlParams.get('theme') || 'light') as 'light' | 'dark',
 			defaultPageSize: parseInt(urlParams.get('pageSize') || '24'),
-			enableSearch: urlParams.get('search') !== 'false',
-			enableFilters: urlParams.get('filters') !== 'false',
+			enableSearch: !(urlParams.get('search') === 'false' || urlParams.get('enableSearch') === 'false'),
+			enableFilters: !(urlParams.get('filters') === 'false' || urlParams.get('enableFilters') === 'false'),
 			showAvatars: urlParams.get('avatars') !== 'false',
 			showJoinDates: urlParams.get('joinDates') !== 'false',
-			showMemberCount: urlParams.get('memberCount') !== 'false',
+			showMemberCount: !(urlParams.get('showMemberCount') === 'false' || urlParams.get('memberCount') === 'false'),
 			showTitle: urlParams.get('showTitle') !== 'false',
 			showTierFilter: urlParams.get('showTierFilter') !== 'false',
 			showStatusFilter: urlParams.get('showStatusFilter') !== 'false',
@@ -144,6 +144,102 @@ export const load: PageServerLoad = async ({ url }) => {
 		// Update memberResponse with sanitized data
 		memberResponse.data = sanitizedMembers;
 
+		// Calculate the actual total count of filtered members
+		let actualTotalMembers = 0;
+		
+		// If we have filters applied (excluding the default 'private' label filter), 
+		// we need to get the total count of all members that match these filters
+		const hasCustomFilters = searchQuery.trim() || tierFilter || statusFilter || newslettersFilter;
+		
+		if (hasCustomFilters) {
+			// For search queries, use the API's pagination total as it represents the search results
+			if (searchQuery.trim()) {
+				actualTotalMembers = memberResponse.meta?.pagination?.total || 0;
+			} else {
+				// For other filters, we need to get all members and count the filtered ones
+				// This is not ideal for performance, but gives accurate counts
+				try {
+					const allMembersResponse = await apiClient.getMembers({
+						page: 1,
+						limit: 1000, // Get a large number to capture most members
+						order: 'created_at DESC'
+					});
+					
+					// Apply the same filtering logic to get the total count
+					const allFilteredMembers = (allMembersResponse.data || []).filter((member: any) => {
+						// Apply private label filter
+						if (member.labels && Array.isArray(member.labels)) {
+							const hasPrivateLabel = member.labels.some(
+								(label: any) => label.slug === 'private' || label.name?.toLowerCase() === 'private'
+							);
+							if (hasPrivateLabel) return false;
+						}
+						
+						// Apply tier filter
+						if (tierFilter && member.tier?.slug !== tierFilter) {
+							return false;
+						}
+						
+						// Apply status filter
+						if (statusFilter && member.status !== statusFilter) {
+							return false;
+						}
+						
+						// Apply newsletter filter
+						if (newslettersFilter.trim()) {
+							const selectedNewsletters = newslettersFilter.split(',').map((n) => n.trim());
+							if (!member.newsletters || !Array.isArray(member.newsletters)) {
+								return false;
+							}
+							const hasMatchingNewsletter = member.newsletters.some((newsletter: any) =>
+								selectedNewsletters.some(
+									(selectedNewsletter) =>
+										newsletter.name === selectedNewsletter ||
+										newsletter.id === selectedNewsletter ||
+										newsletter.name?.toLowerCase().includes(selectedNewsletter.toLowerCase())
+								)
+							);
+							if (!hasMatchingNewsletter) return false;
+						}
+						
+						return true;
+					});
+					
+					actualTotalMembers = allFilteredMembers.length;
+				} catch (error) {
+					console.warn('Failed to get total count for filtered results, using current page count:', error);
+					// Fallback to using the current page count
+					actualTotalMembers = finalMembers.length;
+				}
+			}
+		} else {
+			// No custom filters, just the default private label filter
+			// Get all members and count those without private labels
+			try {
+				const allMembersResponse = await apiClient.getMembers({
+					page: 1,
+					limit: 1000, // Get a large number to capture most members
+					order: 'created_at DESC'
+				});
+				
+				const allPublicMembers = (allMembersResponse.data || []).filter((member: any) => {
+					if (!member.labels || !Array.isArray(member.labels)) {
+						return true; // Include members without labels
+					}
+					// Exclude members who have a label with slug 'private'
+					return !member.labels.some(
+						(label: any) => label.slug === 'private' || label.name?.toLowerCase() === 'private'
+					);
+				});
+				
+				actualTotalMembers = allPublicMembers.length;
+			} catch (error) {
+				console.warn('Failed to get total count, using API pagination total:', error);
+				// Fallback to using the API's pagination total
+				actualTotalMembers = memberResponse.meta?.pagination?.total || 0;
+			}
+		}
+
 		// Test connection to ensure API is working
 		const connectionTest = await apiClient.testConnection();
 		if (!connectionTest.success) {
@@ -152,11 +248,9 @@ export const load: PageServerLoad = async ({ url }) => {
 
 		return {
 			members: memberResponse.data || [],
-			totalMembers: memberResponse.meta?.pagination?.total || 0,
+			totalMembers: actualTotalMembers,
 			currentPage,
-			totalPages: Math.ceil(
-				(memberResponse.meta?.pagination?.total || 0) / config.get().defaultPageSize
-			),
+			totalPages: Math.ceil(actualTotalMembers / config.get().defaultPageSize),
 			config: config.get(),
 			searchQuery,
 			filters: {

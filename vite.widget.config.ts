@@ -1,6 +1,6 @@
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
 import tailwindcss from '@tailwindcss/vite';
-import { sveltekit } from '@sveltejs/kit/vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
@@ -8,18 +8,23 @@ import { resolve } from 'path';
 export default defineConfig({
 	plugins: [
 		tailwindcss(),
-		sveltekit(),
+		svelte(),
 		paraglideVitePlugin({
 			project: './project.inlang',
 			outdir: './src/lib/paraglide'
 		})
 	],
+	resolve: {
+		alias: {
+			'$lib': resolve(__dirname, 'src/lib')
+		}
+	},
 	build: {
 		lib: {
 			entry: resolve(__dirname, 'src/lib/widget/index.ts'),
 			name: 'GhostMemberDirectory',
-			fileName: (format) => `ghost-member-directory.${format}.js`,
-			formats: ['es', 'umd', 'iife']
+			fileName: (format) => `widget.${format}.js`,
+			formats: ['es', 'iife']
 		},
 		rollupOptions: {
 			external: [],
@@ -27,7 +32,7 @@ export default defineConfig({
 				globals: {}
 			}
 		},
-		outDir: 'dist/widget'
+		outDir: 'static'
 	},
 	define: {
 		'process.env.NODE_ENV': JSON.stringify('production')

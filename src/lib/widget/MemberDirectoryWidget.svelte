@@ -213,6 +213,7 @@
 					<Pagination
 						{currentPage}
 						{totalPages}
+						{totalMembers}
 						disabled={loading}
 						showPageNumbers={true}
 						maxVisiblePages={5}

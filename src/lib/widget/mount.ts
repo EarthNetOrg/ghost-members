@@ -1,7 +1,9 @@
 import type { WidgetConfig, EmbedOptions } from '../config/types.js';
 import { ConfigManager } from '../config/index.js';
-import { browser } from '$app/environment';
 import { mount, unmount } from 'svelte';
+
+// Browser detection for standalone widget
+const browser = typeof window !== 'undefined';
 
 export interface MountResult {
 	success: boolean;
@@ -77,13 +79,8 @@ export class WidgetMounter {
 				};
 			}
 
-			// Validate required configuration
-			if (!options.ghostAdminApiUrl || !options.ghostAdminApiKey) {
-				return {
-					success: false,
-					error: 'Ghost Admin API URL and API Key are required'
-				};
-			}
+			// Note: Ghost Admin API URL and API Key are configured server-side via environment variables
+			// GHOST_ADMIN_API_URL and GHOST_ADMIN_API_KEY
 
 			// Create configuration - use constructor to avoid potential static method issues
 			const config = new ConfigManager(options);

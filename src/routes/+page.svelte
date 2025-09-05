@@ -18,6 +18,7 @@
 
 	// New configuration options
 	let showTitle = true;
+	let showMemberCount = true;
 	let showTierFilter = true;
 	let showStatusFilter = true;
 	let showNewsletterFilter = true;
@@ -27,7 +28,7 @@
 	// Get current server URL for embedding instructions
 	$: currentUrl = browser ? window.location.origin : 'https://your-domain.com';
 
-	onMount(async () => {
+			onMount(async () => {
 		try {
 			// Use URL parameter if provided, otherwise use selected language
 			const effectiveLanguage = urlLang || language;
@@ -50,7 +51,7 @@
 				enableFilters: true,
 				showAvatars: true,
 				showJoinDates: true,
-				showMemberCount: true,
+				showMemberCount,
 				showTitle,
 				showTierFilter,
 				showStatusFilter,
@@ -107,7 +108,7 @@
 				enableFilters: true,
 				showAvatars: true,
 				showJoinDates: true,
-				showMemberCount: true,
+				showMemberCount,
 				showTitle,
 				showTierFilter,
 				showStatusFilter,
@@ -179,8 +180,13 @@
 		<h3>Display Options</h3>
 		<div class="control-group">
 			<label>
-				<input type="checkbox" bind:checked={showTitle} />
+				<input type="checkbox" bind:checked={showTitle} class="input checkbox" />
 				Show Title
+			</label>
+
+			<label>
+				<input type="checkbox" bind:checked={showMemberCount} class="input checkbox" />
+				Show Member Count
 			</label>
 
 			<label>
@@ -192,7 +198,7 @@
 			</label>
 
 			<label>
-				<input type="checkbox" bind:checked={enableViewToggle} />
+				<input type="checkbox" bind:checked={enableViewToggle} class="input checkbox" />
 				Enable View Toggle
 			</label>
 		</div>
@@ -200,17 +206,17 @@
 		<h3>Filter Options</h3>
 		<div class="control-group">
 			<label>
-				<input type="checkbox" bind:checked={showTierFilter} />
+				<input type="checkbox" bind:checked={showTierFilter} class="input checkbox" />
 				Show Tier Filter
 			</label>
 
 			<label>
-				<input type="checkbox" bind:checked={showStatusFilter} />
+				<input type="checkbox" bind:checked={showStatusFilter} class="input checkbox" />
 				Show Status Filter
 			</label>
 
 			<label>
-				<input type="checkbox" bind:checked={showNewsletterFilter} />
+				<input type="checkbox" bind:checked={showNewsletterFilter} class="input checkbox" />
 				Show Newsletter Filter
 			</label>
 		</div>
@@ -242,6 +248,23 @@
 	</div>
 
 	<div class="demo-docs">
+		<h2>Configuration</h2>
+		<p>Before embedding the widget, you need to configure your Ghost API credentials as environment variables:</p>
+		
+		<h3>Environment Variables</h3>
+		<p>Create a <code>.env</code> file in your project root with the following variables:</p>
+		<pre><code># Ghost Admin API Configuration
+GHOST_ADMIN_API_URL=https://your-ghost-site.com
+GHOST_ADMIN_API_KEY=your-admin-api-key-here</code></pre>
+		
+		<p><strong>How to get your Ghost Admin API Key:</strong></p>
+		<ol>
+			<li>Go to your Ghost Admin panel</li>
+			<li>Navigate to Settings → Integrations</li>
+			<li>Click "Add custom integration"</li>
+			<li>Copy the Admin API URL and Admin API Key</li>
+		</ol>
+
 		<h2>Embedding Instructions</h2>
 		<p>This widget can be embedded in your Ghost theme or website using various methods:</p>
 
@@ -262,7 +285,7 @@
 		<pre><code
 				>&lt;!-- Add to your Ghost theme's default.hbs before closing &lt;/body&gt; tag --&gt;
 &lt;div id="ghost-member-directory"&gt;&lt;/div&gt;
-&lt;script src="{currentUrl}/widget.js"&gt;&lt;/script&gt;
+&lt;script src="{currentUrl}/widget.iife.js"&gt;&lt;/script&gt;
 &lt;script&gt;
   GhostMemberDirectory.mount(&apos;#ghost-member-directory&apos;, &lbrace;
     defaultLanguage: &apos;en&apos;,
@@ -295,11 +318,11 @@ const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
 			<li><strong>lang:</strong> 'en', 'ar', 'he', 'es', 'fr', 'de', 'ru'</li>
 			<li><strong>theme:</strong> 'light' or 'dark'</li>
 			<li><strong>pageSize:</strong> Number of members per page (6-50)</li>
-			<li><strong>search:</strong> 'true' or 'false' - Enable search</li>
-			<li><strong>filters:</strong> 'true' or 'false' - Enable filters</li>
+			<li><strong>search/enableSearch:</strong> 'true' or 'false' - Enable search</li>
+			<li><strong>filters/enableFilters:</strong> 'true' or 'false' - Enable filters</li>
 			<li><strong>avatars:</strong> 'true' or 'false' - Show avatars</li>
 			<li><strong>joinDates:</strong> 'true' or 'false' - Show join dates</li>
-			<li><strong>memberCount:</strong> 'true' or 'false' - Show member count</li>
+			<li><strong>showMemberCount:</strong> 'true' or 'false' - Show member count</li>
 			<li><strong>showTitle:</strong> 'true' or 'false' - Show directory title</li>
 			<li><strong>showTierFilter:</strong> 'true' or 'false' - Show tier filter</li>
 			<li><strong>showStatusFilter:</strong> 'true' or 'false' - Show status filter</li>
@@ -320,7 +343,7 @@ const result = await WidgetMounter.mount(&apos;#container&apos;, &lbrace;
 			<li><strong>widgetTheme:</strong> 'light' or 'dark'</li>
 			<li><strong>defaultPageSize:</strong> Number of members per page (default: 24)</li>
 			<li><strong>enableSearch:</strong> Enable search functionality (default: true)</li>
-			<li><strong>enableFilters:</strong> Enable tier filtering (default: true)</li>
+			<li><strong>enableFilters:</strong> Enable filtering functionality (default: true)</li>
 			<li><strong>showAvatars:</strong> Show member avatars (default: true)</li>
 			<li><strong>showJoinDates:</strong> Show member join dates (default: true)</li>
 			<li><strong>showMemberCount:</strong> Show total member count (default: true)</li>
@@ -436,9 +459,15 @@ GHOST_ADMIN_API_KEY=your-admin-api-key
 	}
 
 	.control-group input[type="checkbox"] {
-		width: auto;
+		width: 16px;
+		height: 16px;
 		padding: 0;
 		margin-right: 0.5rem;
+		flex-shrink: 0;
+		cursor: pointer;
+		appearance: auto;
+		-webkit-appearance: checkbox;
+		-moz-appearance: checkbox;
 	}
 
 	.control-group label:has(input[type="checkbox"]) {

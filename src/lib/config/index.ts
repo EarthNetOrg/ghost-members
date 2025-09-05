@@ -1,5 +1,7 @@
 import type { WidgetConfig } from './types.js';
-import { browser } from '$app/environment';
+
+// Browser detection for standalone widget
+const browser = typeof window !== 'undefined';
 
 const DEFAULT_CONFIG: WidgetConfig = {
 	// Ghost API Configuration (will be provided at runtime)
@@ -91,13 +93,8 @@ export class ConfigManager {
 	validateConfig(): { isValid: boolean; errors: string[] } {
 		const errors: string[] = [];
 
-		if (!this.config.ghostAdminApiUrl) {
-			errors.push('Ghost Admin API URL is required');
-		}
-
-		if (!this.config.ghostAdminApiKey) {
-			errors.push('Ghost Admin API Key is required');
-		}
+		// Note: Ghost Admin API URL and API Key are configured server-side via environment variables
+		// GHOST_ADMIN_API_URL and GHOST_ADMIN_API_KEY - no client-side validation needed
 
 		if (this.config.defaultPageSize < 1 || this.config.defaultPageSize > 100) {
 			errors.push('Default page size must be between 1 and 100');

@@ -7,6 +7,7 @@
 	export let disabled = false;
 	export let showPageNumbers = true;
 	export let maxVisiblePages = 5;
+	export let totalMembers = 0;
 
 	const dispatch = createEventDispatcher<{
 		pageChange: number;
@@ -65,6 +66,7 @@
 <div class="pagination">
 	<div class="pagination-info">
 		<span class="page-info">
+			{totalMembers} members
 			{page()}
 			{currentPage}
 			{of()}
